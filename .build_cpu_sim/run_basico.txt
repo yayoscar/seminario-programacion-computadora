@@ -1,0 +1,24 @@
+--- Estado Inicial de la Memoria ---
+
+00: 01 10 02 11 03 12 FF 00 
+08: 00 00 00 00 00 00 00 00 
+10: 0A 14 00 00 00 00 00 00 
+18: 00 00 00 00 00 00 00 00 
+
+--- Iniciando Ciclo de Ejecución ---
+EJECUTADO: LOAD desde la dirección 0x10 (Valor: 10)
+PC: 02  IR: 01  ACC: 0A
+EJECUTADO: ADD desde la dirección 0x11 (Nuevo ACC: 30)
+PC: 04  IR: 02  ACC: 1E
+EJECUTADO: STORE en la dirección 0x12 (Valor: 30)
+PC: 06  IR: 03  ACC: 1E
+EJECUTADO: HALT
+PC: 07  IR: FF  ACC: 1E
+--- Ejecución Detenida (HALT) ---
+
+--- Estado Final de la Memoria ---
+
+00: 01 10 02 11 03 12 FF 00 
+08: 00 00 00 00 00 00 00 00 
+10: 0A 14 1E 00 00 00 00 00 
+18: 00 00 00 00 00 00 00 00 
