@@ -107,8 +107,8 @@
 #define TAM_MEMORIA     256    // Alias en español
 #define NUM_REGISTERS   16     // Número de registros generales (R0-R15)
 #define NUM_REGISTROS   16     // Alias en español
-#define STACK_BASE      255    // Dirección base de la pila (crece hacia abajo)
-#define BASE_PILA       255    // Alias en español
+#define STACK_BASE      250    // Dirección base de la pila (crece hacia abajo, con margen)
+#define BASE_PILA       250    // Alias en español
 
 // ============================================================================
 // MNEMÓNICOS (para referencia del ensamblador)

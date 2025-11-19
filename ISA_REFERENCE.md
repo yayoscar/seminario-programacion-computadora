@@ -214,7 +214,7 @@ finde:
 
 ---
 
-## Instrucciones Futuras (Semanas 3-4)
+## Instrucciones Futuras (Actividades 3-4)
 
 Estas se añadirán para llamadas a funciones y recursión:
 

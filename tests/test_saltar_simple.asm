@@ -1,0 +1,5 @@
+SALTAR end
+MOVI R0, 99
+end:
+MOVI R1, 42
+ALTO

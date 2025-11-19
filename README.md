@@ -1,29 +1,27 @@
-# Simulador de CPU & Ensamblador - Proyecto de Seminario
+# Simulador de CPU con Pipeline Completo
 
-## 📋 Descripción del Proyecto
+## Descripción del Proyecto
 
-Este proyecto implementa una **computadora simulada completa** con:
+Simulador educativo completo de una computadora con ISA de 16 bits y mnemónicos en español. Implementa el flujo completo desde código C hasta ejecución en CPU simulada.
 
-1. **Simulador de CPU**: Simulador con arquitectura de registros generales
-2. **Ensamblador**: Ensamblador de dos pasadas que traduce código ensamblador a código máquina
-3. **ISA (Arquitectura del Conjunto de Instrucciones)**: Conjunto de instrucciones de 16 bits
+### Componentes Principales
 
-### 🌟 Características Especiales
+1. **Compilador C → ASM** (`c_to_asm.c`) - Traduce subconjunto de C a ensamblador
+2. **Ensamblador** (`assembler.c`) - Ensamblador de dos pasadas con pseudo-instrucciones
+3. **Simulador CPU** (`cpu_simulator.c`) - Simulador con arquitectura de registros generales
+4. **ISA de 16 bits** - Conjunto de instrucciones en español (MOVI, SUMAR, LLAMAR, etc.)
 
-- **Lenguaje en Español (México)**: Todos los mnemónicos y comandos están en español
-- **Sintaxis Natural**: Instrucciones como MOVER, SUMAR, CARGAR, SALTAR
-- **Diseñado para Aprendizaje**: Ideal para estudiantes de habla hispana
+### Características
 
-### Cronograma de Desarrollo
-
-- **✅ Semana 1**: CPU simulada básica en C
-- **✅ Semana 2**: Lenguaje ensamblador en español + ensamblador
-- **⏳ Semana 3**: Mini compilador C → Ensamblador
-- **⏳ Semana 4**: Integración completa + programa recursivo
+- ✅ **Mnemónicos en español** - MOVER, SUMAR, CARGAR, LLAMAR, RETORNAR
+- ✅ **Pipeline completo** - C → ASM → Binario → Ejecución
+- ✅ **Llamadas a funciones** - Pseudo-instrucciones LLAMAR/RETORNAR
+- ✅ **Gestión de stack** - EMPUJAR/SACAR con R14 como SP
+- ✅ **16 instrucciones básicas** - Aritméticas, lógicas, memoria, saltos, I/O
 
 ---
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 ### ISA (Arquitectura del Conjunto de Instrucciones)
 
@@ -53,7 +51,7 @@ Este proyecto implementa una **computadora simulada completa** con:
 
 ---
 
-## 📚 Conjunto de Instrucciones (en Español)
+## Conjunto de Instrucciones
 
 | Código | Mnemónico | Descripción | Ejemplo |
 |--------|-----------|-------------|---------|
@@ -78,21 +76,20 @@ Este proyecto implementa una **computadora simulada completa** con:
 
 El ensamblador también acepta los mnemónicos en inglés (NOP, MOV, ADD, etc.) para compatibilidad con código existente.
 
-### Instrucciones Futuras (Semanas 3-4)
+### ✅ Pseudo-Instrucciones Implementadas (Semanas 3-4)
 
 ```assembly
-LLAMAR dir   ; Llamada a función
-RETORNAR     ; Retorno de función
-EMPUJAR Rd   ; Push a pila
-SACAR Rd     ; Pop de pila
-COMPARAR Rd, Rs  ; Comparación
-MULTI Rd, Rs     ; Multiplicación
-DIVIDIR Rd, Rs   ; División
+LLAMAR dir   ; ✅ Llamada a función (expandida a 5 instrucciones)
+RETORNAR     ; ✅ Retorno de función (expandida a 4 instrucciones)
+EMPUJAR Rd   ; ✅ Push a pila (expandida a 3 instrucciones)
+SACAR Rd     ; ✅ Pop de pila (expandida a 3 instrucciones)
 ```
+
+**Nota:** Estas pseudo-instrucciones son expandidas automáticamente por el ensamblador a instrucciones máquina nativas.
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 seminario-programacion-computadora/
@@ -110,7 +107,6 @@ seminario-programacion-computadora/
 │   ├── test_simple.asm    # Prueba simple: suma 10+20
 │   ├── test_memory.asm    # Prueba de LOAD/STORE
 │   ├── test_logical.asm   # Pruebas de AND/OR/NOT
-│   └── test_factorial.asm # Factorial iterativo (preparado para recursión)
 ├── bin/                   # Ejecutables generados
 │   ├── cpu_sim           # Programa principal
 │   └── assembler         # Ensamblador standalone
@@ -120,7 +116,7 @@ seminario-programacion-computadora/
 
 ---
 
-## 🚀 Compilación y Uso
+## Compilación y Uso
 
 ### Requisitos
 
@@ -157,9 +153,9 @@ Salida:
 ### Solo ensamblar (sin ejecutar)
 
 ```bash
-./bin/main -a asm/programa.asm
+./bin/main -a asm/programa.asm asm/programa.mem
 # o usando el nombre largo:
-./bin/main --ensamblar asm/programa.asm
+./bin/main --ensamblar asm/programa.asm asm/programa.mem
 ```
 
 Genera el archivo `asm/programa.mem` con el código máquina en hexadecimal.
@@ -225,8 +221,8 @@ Ejemplos:
 ### 2. Solo Ensamblar
 
 ```bash
-./bin/main -a asm/programa.asm
-./bin/main --ensamblar asm/programa.asm
+./bin/main -a asm/programa.asm asm/programa.mem
+./bin/main --ensamblar asm/programa.asm asm/programa.mem
 ```
 
 Genera el archivo `asm/programa.mem` con el código máquina.
@@ -339,25 +335,39 @@ loop:   ADD R0, R1      ; Label 'loop'
 
 ## 🎯 Ejemplos de Programas en Español
 
-### Suma 1 a 10 (resultado: 55)
+### Ejemplo Básico: Suma de Dos Números (5 + 3 = 8)
 
 ```assembly
-; Programa que suma los números del 1 al 10
-        MOVI R0, 0      ; suma = 0
-        MOVI R1, 1      ; i = 1
-        MOVI R2, 10     ; limite = 10
+; Programa: Suma Simple
+; Descripción: Suma dos números (5 + 3)
+; Resultado esperado: 8
 
-bucle:  SUMAR R0, R1    ; suma += i
-        MOVI R3, 1
-        SUMAR R1, R3    ; i++
-        MOVI R5, 11
-        MOVER R6, R1
-        RESTAR R6, R5
-        SZ R6, fin      ; si i == 11, terminar
-        SALTAR bucle
+inicio:
+    MOVI R0, 5          ; R0 = 5 (primer número)
+    MOVI R1, 3          ; R1 = 3 (segundo número)
+    SUMAR R0, R1        ; R0 = R0 + R1 = 5 + 3 = 8
+    ESCRIBIR R0         ; Mostrar resultado
+    ALTO                ; Terminar programa
+```
 
-fin:    ESCRIBIR R0     ; Mostrar resultado (55)
-        ALTO
+**Código máquina generado** (archivo `.mem`):
+```
+1005    ; MOVI R0, 5
+1103    ; MOVI R1, 3
+3001    ; SUMAR R0, R1
+D000    ; ESCRIBIR R0
+F000    ; ALTO
+```
+
+**Ejecutar:**
+```bash
+./bin/main -e asm/programa.asm
+```
+
+**Resultado:**
+```
+[SALIDA] R0 = 8 (0x0008)
+[CPU] Ejecución detenida después de 5 cycles
 ```
 
 ### Operaciones de Memoria
@@ -389,72 +399,31 @@ fin:    ESCRIBIR R0     ; Mostrar resultado (55)
 
 ---
 
-## 🔮 Extensiones Futuras (Semanas 3-4)
-
-### Semana 3: Compilador C → ASM
-
-- Implementar `c_to_asm.c`
-- Soportar:
-  - Asignaciones: `int x = 10;`
-  - Expresiones: `x = a + b * c;`
-  - Condicionales: `if (x > 0) { ... }`
-  - Bucles: `for`, `while`
-
-### Semana 4: Funciones y Recursión
-
-- Añadir instrucciones:
-  - `CALL addr`: Llamada a función
-  - `RET`: Retorno
-  - `PUSH Rd`: Push a stack
-  - `POP Rd`: Pop de stack
-- Implementar:
-  - Factorial recursivo
-  - Fibonacci recursivo
-  - Convenciones de llamada
-
-### Diseño del Stack (ya preparado)
-
-- **R14 (SP)**: Stack Pointer
-- Stack crece hacia abajo desde 0xFF
-- `CALL`: 
-  ```
-  MEM[SP] = PC
-  SP = SP - 1
-  PC = addr
-  ```
-- `RET`:
-  ```
-  SP = SP + 1
-  PC = MEM[SP]
-  ```
-
----
-
-## 🐛 Debugging
-
-### Ver estado de la CPU
-
-El simulador muestra automáticamente:
-- Valores de todos los registros
-- PC, IR, ciclos ejecutados
-- Flags (zero, carry)
-- Memoria (primeras 32 palabras)
-
-### Modo verbose (futuro)
-
-```bash
-./bin/cpu_sim -v -e programa.asm   # Modo detallado
-```
-
----
-
 ## 📊 Estadísticas del Proyecto
 
-- **Líneas de código**: ~1500+ líneas
-- **Instrucciones soportadas**: 16 (con 10+ más planificadas)
-- **Registros**: 16 de propósito general
-- **Memoria**: 256 palabras de 16 bits
-- **Tamaño de instrucción**: 16 bits fijos
+- **Líneas de código**: ~2,000+ líneas (fuente + headers)
+- **Instrucciones básicas**: 16 (OP_NADA a OP_ALTO)
+- **Pseudo-instrucciones**: 4 (LLAMAR, RETORNAR, EMPUJAR, SACAR)
+- **Registros**: 16 de propósito general (R0-R15)
+- **Memoria**: 256 palabras de 16 bits (Von Neumann)
+- **Stack**: Base en dirección 250, crece hacia abajo
+
+---
+
+## 🎓 Uso Educativo
+
+Este simulador permite entender el flujo completo de ejecución de programas:
+
+```
+Código C → Compilador → ASM → Ensamblador → Binario → CPU → Resultado
+```
+
+Cada etapa es visible y puede ser inspeccionada, facilitando el aprendizaje de:
+- Compilación y traducción de lenguajes
+- Arquitectura de computadoras
+- Gestión de memoria y stack
+- Llamadas a funciones y convenciones
+- Ciclo fetch-decode-execute
 
 ---
 
@@ -479,21 +448,28 @@ Este proyecto es parte de un seminario educativo.
 
 ---
 
-## ✅ Checklist de Semana 2
+## 📚 Documentación
 
-- [x] Definir ISA de 16 bits
-- [x] Implementar 16 instrucciones básicas
-- [x] CPU con 16 registros generales
-- [x] Ensamblador de dos pasadas
-- [x] Soporte para etiquetas
-- [x] Saltos condicionales e incondicionales
-- [x] Operaciones aritméticas y lógicas
-- [x] Operaciones de memoria (LOAD/STORE)
-- [x] I/O básico (IN/OUT)
-- [x] Programa de prueba funcional
-- [x] Makefile para compilación automatizada
-- [x] Suite de tests
+- **README.md** - Este archivo (guía de uso)
+- **MEMORIA_TECNICA.md** - Proceso completo de desarrollo, retos y reflexiones
+- **ISA_REFERENCE.md** - Referencia completa de la ISA
+- **docs/presentacion_completa.html** - Presentación del proyecto
 
-**¡Semana 2 completada! 🎉**
+---
 
-Próximo objetivo: **Semana 3 - Compilador C → ASM**
+## 👥 Autores
+
+Proyecto de Seminario de Programación de Computadora
+
+---
+
+## 🎓 Valor Educativo
+
+Este simulador demuestra el flujo completo de ejecución de programas, desde código de alto nivel hasta instrucciones máquina. Es una herramienta didáctica que permite entender:
+
+- Cómo los compiladores traducen código
+- Cómo funcionan los ensambladores
+- Cómo ejecuta instrucciones una CPU
+- La importancia de las abstracciones en computación
+
+Para detalles del proceso de desarrollo, desafíos superados y reflexiones sobre el aprendizaje, consultar **MEMORIA_TECNICA.md**.

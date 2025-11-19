@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto Completo - Seminario Programación de Computadoras</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 { text-transform: none !important; }
+        .reveal section { text-align: left; }
+        .reveal .center-content { text-align: center; }
+        .reveal pre { width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 0.75em; }
+        .reveal code { background: #282c34; padding: 3px 6px; border-radius: 3px; font-size: 0.9em; }
+        
+        .box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 25px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-size: 1.8em;
+        }
+        
+        .box ul, .box ol {
+            font-size: 1em;
+            line-height: 1.6;
+        }
+        
+        .box li {
+            margin-bottom: 10px;
+        }
+        
+        .box-success {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .box-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .phase-box {
+            background: rgba(139, 92, 246, 0.2);
+            border: 3px solid #8b5cf6;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        
+        .week-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .week-1 { background: #991b1b; }
+        .week-2 { background: #1e40af; }
+        .week-3 { background: #166534; }
+        .week-4 { background: #6b21a8; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            
+            <!-- PORTADA -->
+            <section class="center-content" data-background-gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                <h1 class="text-3xl font-bold mb-4">PROYECTO COMPLETO</h1>
+                <h2 class="text-2xl mb-6">Sistema Computacional desde Arquitectura hasta Alto Nivel</h2>
+                
+                <div class="bg-white/10 p-6 rounded-lg mb-6">
+                    <p class="text-xl font-semibold mb-2">Seminario de Programación de Computadoras</p>
+                    <p class="text-lg">Doctorado en Sistemas Computacionales</p>
+                    <p class="text-lg">Universidad del Sur</p>
+                </div>
+                
+                <div class="bg-white/10 p-5 rounded-lg">
+                    <p class="text-lg font-semibold mb-3">Equipo:</p>
+                    <p class="text-base">M.C.C. Aarón Antero Borboa Jaimes</p>
+                    <p class="text-base">M. En I. Angel Manuel Mex Alvarez</p>
+                    <p class="text-base">M.T.I. Oscar Pérez Olan</p>
+                </div>
+                
+                <p class="mt-4 text-sm">18 de noviembre de 2025</p>
+            </section>
+
+            <!-- ÍNDICE GENERAL -->
+            <section>
+                <h2 class="text-4xl font-bold mb-8">📋 Índice del Proyecto</h2>
+                
+                <div class="grid grid-cols-2 gap-6 text-lg">
+                    <div class="box">
+                        <span class="week-badge week-1">SEMANA 1</span>
+                        <p class="font-bold mt-3 text-xl">Arquitectura de Computadoras</p>
+                        <ul class="list-disc ml-6 mt-3 space-y-2">
+                            <li>Modelo Von Neumann</li>
+                            <li>CPU Simulada</li>
+                            <li>Memoria y Registros</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <span class="week-badge week-2">SEMANA 2</span>
+                        <p class="font-bold mt-3 text-xl">Lenguaje Ensamblador</p>
+                        <ul class="list-disc ml-6 mt-3 space-y-2">
+                            <li>ISA de 16 bits</li>
+                            <li>Ensamblador 2 pasadas</li>
+                            <li>Modos de direccionamiento</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <span class="week-badge week-3">SEMANA 3</span>
+                        <p class="font-bold mt-3 text-xl">Lenguajes de Alto Nivel</p>
+                        <ul class="list-disc ml-6 mt-3 space-y-2">
+                            <li>Compilador C → ASM</li>
+                            <li>Estructuras de control</li>
+                            <li>Pseudo-instrucciones</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <span class="week-badge week-4">SEMANA 4</span>
+                        <p class="font-bold mt-3 text-xl">Integración y Recursión</p>
+                        <ul class="list-disc ml-6 mt-3 space-y-2">
+                            <li>Sistema completo</li>
+                            <li>Recursión avanzada</li>
+                            <li>Validación experimental</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEMANA 1: TÍTULO -->
+            <section class="center-content" data-background="#991b1b">
+                <h1 class="text-4xl font-bold mb-4">SEMANA 1</h1>
+                <h2 class="text-3xl mb-6">Arquitectura de Computadoras</h2>
+                <p class="text-xl">Modelo Von Neumann y CPU Simulada</p>
+            </section>
+
+            <!-- S1: Modelo Von Neumann -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-1">SEMANA 1</span> 1.1 Modelo Von Neumann</h2>
+                
+                <div class="box-success text-xl mb-6">
+                    <p class="font-bold mb-3">Concepto Fundamental</p>
+                    <p>Arquitectura donde programa y datos residen en la misma memoria.</p>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-4 text-lg text-center">
+                    <div class="phase-box">
+                        <p class="font-bold text-xl mb-2">CPU</p>
+                        <p>ALU + UC</p>
+                    </div>
+                    <div class="phase-box">
+                        <p class="font-bold text-xl mb-2">Memoria</p>
+                        <p>256 words</p>
+                    </div>
+                    <div class="phase-box">
+                        <p class="font-bold text-xl mb-2">I/O</p>
+                        <p>Entrada/Salida</p>
+                    </div>
+                    <div class="phase-box">
+                        <p class="font-bold text-xl mb-2">Buses</p>
+                        <p>Datos/Dirección</p>
+                    </div>
+                </div>
+                
+                <div class="box text-lg mt-6">
+                    <p class="font-bold mb-3 text-xl">Ciclo de Ejecución</p>
+                    <ol class="list-decimal ml-6 space-y-2">
+                        <li><strong>FETCH:</strong> Leer instrucción de memoria[PC]</li>
+                        <li><strong>DECODE:</strong> Interpretar opcode y operandos</li>
+                        <li><strong>EXECUTE:</strong> Ejecutar operación en ALU/UC</li>
+                        <li><strong>WRITE-BACK:</strong> Guardar resultado</li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- S1: CPU Implementada - Parte 1 -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-1">SEMANA 1</span> 1.3 El Procesador</h2>
+                
+                <div class="grid grid-cols-2 gap-6 text-lg">
+                    <div class="box">
+                        <p class="font-bold mb-4 text-xl">Registros (16 × 16 bits)</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>✓ R0-R13: Propósito general</div>
+                            <div>✓ R14: Stack Pointer (SP)</div>
+                            <div>✓ R15: Temporal</div>
+                            <div>✓ PC: Program Counter</div>
+                        </div>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-4 text-xl">Unidad de Control</p>
+                        <ul class="list-disc ml-6 space-y-2">
+                            <li>Decodificador de instrucciones</li>
+                            <li>Secuenciador de ciclos</li>
+                            <li>Control de ALU</li>
+                            <li>Manejo de saltos</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S1: CPU Implementada - Parte 2 (Código) -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-1">SEMANA 1</span> 1.3 Código del Simulador</h2>
+                
+                <div class="box mb-4">
+                    <p class="font-bold mb-3 text-xl">Estructura de la CPU en C</p>
+                </div>
+                
+                <pre><code class="language-c">typedef struct {
+    uint16_t memory[256];      // 256 words de memoria
+    uint16_t registers[16];    // 16 registros de propósito general
+    uint16_t pc;               // Program Counter
+    bool running;              // Estado de ejecución
+} CPU;
+
+void cpu_execute(CPU *cpu) {
+    // Fetch
+    uint16_t instruction = cpu->memory[cpu->pc];
+    
+    // Decode
+    uint8_t opcode = (instruction >> 12) & 0xF;
+    uint8_t reg1 = (instruction >> 8) & 0xF;
+    uint8_t reg2 = (instruction >> 4) & 0xF;
+    uint8_t operand = instruction & 0xF;
+    
+    // Execute
+    switch(opcode) {
+        case OP_SUMAR:
+            cpu->registers[reg1] += cpu->registers[reg2];
+            break;
+        // ... más instrucciones
+    }
+}</code></pre>
+            </section>
+
+            <!-- S1: Memoria -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-1">SEMANA 1</span> 1.5 La Memoria</h2>
+                
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="box-success">
+                        <p class="font-bold mb-2">Implementación</p>
+                        <ul class="list-disc ml-4">
+                            <li>256 palabras × 16 bits</li>
+                            <li>Direccionamiento directo</li>
+                            <li>Acceso uniforme (Von Neumann)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-2">Organización</p>
+                        <div class="text-xs">
+                            <div>0x00-0x7F: Código</div>
+                            <div>0x80-0xEF: Datos</div>
+                            <div>0xF0-0xFF: Stack</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="box text-xs mt-3">
+                    <p class="font-bold mb-2">Jerarquía Simulada</p>
+                    <p>Nivel 1: Registros (acceso inmediato)</p>
+                    <p>Nivel 2: Memoria RAM (array de 256 words)</p>
+                </div>
+            </section>
+
+            <!-- S1: Entregables -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-1">SEMANA 1</span> Entregables</h2>
+                
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ cpu_simulator.c</p>
+                        <ul class="list-disc ml-4 space-y-1">
+                            <li>Ciclo fetch-decode-execute</li>
+                            <li>16 registros + PC + SP</li>
+                            <li>256 words de memoria</li>
+                            <li>Ejecución paso a paso</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ Diagrama de Arquitectura</p>
+                        <ul class="list-disc ml-4 space-y-1">
+                            <li>Componentes: CPU, MEM, I/O</li>
+                            <li>Buses de datos y control</li>
+                            <li>Flujo de ejecución</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="stat-card mt-3 text-sm">
+                    <p class="font-bold">Resultado: CPU Funcional ✓</p>
+                </div>
+            </section>
+
+            <!-- SEMANA 2: TÍTULO -->
+            <section class="center-content" data-background="#1e40af">
+                <h1 class="text-4xl font-bold mb-4">SEMANA 2</h1>
+                <h2 class="text-3xl mb-6">Lenguaje de Máquinas y Ensambladores</h2>
+                <p class="text-xl">ISA de 16 bits y Traductor ASM → Binario</p>
+            </section>
+
+            <!-- S2: ISA -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-2">SEMANA 2</span> 2.2 ISA - Conjunto de Instrucciones</h2>
+                
+                <div class="box text-xl mb-6">
+                    <p class="font-bold mb-3">Formato de Instrucción</p>
+                    <p class="font-mono">16 bits = [4 opcode] [4 reg1] [4 reg2] [4 immediate/reg3]</p>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-6 text-lg">
+                    <div class="box-success">
+                        <p class="font-bold mb-3 text-xl">Aritméticas</p>
+                        <div class="space-y-2">
+                            <div>✓ SUMAR, RESTAR</div>
+                            <div>✓ Y, O, NO, XOR</div>
+                        </div>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-3 text-xl">Transferencia</p>
+                        <div class="space-y-2">
+                            <div>✓ MOVER, MOVI</div>
+                            <div>✓ CARGAR, GUARDAR</div>
+                        </div>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-3 text-xl">Control</p>
+                        <div class="space-y-2">
+                            <div>✓ SALTAR, SZ, SNZ</div>
+                            <div>✓ ALTO</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <p class="font-bold mb-3 text-xl">Ejemplo: Suma Simple</p>
+                    <pre><code class="language-asm">; Ejemplo: suma = a + b
+MOVI R4, 5       ; a = 5
+MOVI R5, 3       ; b = 3
+SUMAR R6, R4, R5 ; suma = a + b</code></pre>
+                </div>
+            </section>
+
+            <!-- S2: Ensamblador - Parte 1 -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-2">SEMANA 2</span> 2.6 Ensamblador de 2 Pasadas</h2>
+                
+                <div class="box mb-6 text-xl">
+                    <p class="font-bold mb-4 text-2xl">Algoritmo de 2 Pasadas</p>
+                    <div class="space-y-4">
+                        <p><strong class="text-yellow-400">Pasada 1:</strong> Construir tabla de símbolos (etiquetas → direcciones)</p>
+                        <p><strong class="text-green-400">Pasada 2:</strong> Generar código binario resolviendo referencias</p>
+                    </div>
+                </div>
+                
+                <div class="box-success text-lg">
+                    <p class="font-bold mb-3 text-xl">Ventajas</p>
+                    <ul class="list-disc ml-6 space-y-2">
+                        <li>Permite referencias forward (saltos hacia adelante)</li>
+                        <li>Construcción completa de la tabla de símbolos</li>
+                        <li>Resolución eficiente de etiquetas</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- S2: Ensamblador - Parte 2 (Ejemplo) -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-2">SEMANA 2</span> Ejemplo de Ensamblado</h2>
+                
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <p class="font-bold mb-4 text-2xl">📝 Entrada: programa.asm</p>
+                        <pre><code class="language-asm">inicio:
+    MOVI R0, 10
+bucle:
+    RESTAR R0, R15, 1
+    SNZ R0, bucle
+    ALTO</code></pre>
+                    </div>
+                    
+                    <div>
+                        <p class="font-bold mb-4 text-2xl">💾 Salida: programa.mem</p>
+                        <pre><code>140A  ; MOVI R0, 10
+2F01  ; RESTAR R0, R15, 1
+B002  ; SNZ R0, addr(2)
+F000  ; ALTO</code></pre>
+                    </div>
+                </div>
+
+                <div class="box-success text-lg mt-6">
+                    <p class="text-center"><strong>✅ Resultado:</strong> Código binario listo para ejecutar en CPU</p>
+                </div>
+            </section>
+
+            <!-- S2: Modos de Direccionamiento -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-2">SEMANA 2</span> 2.1 Modos de Direccionamiento</h2>
+                
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="box">
+                        <p class="font-bold mb-1">Inmediato</p>
+                        <pre><code>MOVI R4, 5  ; R4 ← 5</code></pre>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-1">Directo por Registro</p>
+                        <pre><code>MOVER R4, R5  ; R4 ← R5</code></pre>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-1">Directo a Memoria</p>
+                        <pre><code>CARGAR R4, 0x80  ; R4 ← mem[0x80]</code></pre>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-1">Indirecto por Registro</p>
+                        <pre><code>CARGAR R4, R14  ; R4 ← mem[R14]</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S2: Entregables -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-2">SEMANA 2</span> Entregables</h2>
+                
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ assembler.c</p>
+                        <ul class="list-disc ml-4">
+                            <li>2 pasadas completas</li>
+                            <li>Tabla de símbolos</li>
+                            <li>16 instrucciones base</li>
+                            <li>Salida en .mem (hexadecimal)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ Programas de Prueba</p>
+                        <ul class="list-disc ml-4">
+                            <li>test_simple.asm ✓</li>
+                            <li>test_logico.asm ✓</li>
+                            <li>test_memoria.asm ✓</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="stat-card mt-3 text-sm">
+                    <p class="font-bold">Resultado: ASM → Binario → CPU Ejecutando ✓</p>
+                </div>
+            </section>
+
+            <!-- SEMANA 3: TÍTULO -->
+            <section class="center-content" data-background="#166534">
+                <h1 class="text-4xl font-bold mb-4">SEMANA 3</h1>
+                <h2 class="text-3xl mb-6">Lenguajes de Alto Nivel</h2>
+                <p class="text-xl">Compilador C y Pseudo-instrucciones</p>
+            </section>
+
+            <!-- S3: Compilador C - Concepto -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-3">SEMANA 3</span> 3.4 Compilador C → ASM</h2>
+                
+                <div class="box mb-6 text-xl">
+                    <p class="font-bold mb-3 text-2xl">Mini-Compilador de C a Ensamblador</p>
+                    <p>Traduce un subconjunto de C a nuestro ASM de 16 bits.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="box-success text-lg">
+                        <p class="font-bold mb-3 text-xl">✅ Soporta</p>
+                        <ul class="list-disc ml-6 space-y-2">
+                            <li>Declaraciones: <code>int x;</code></li>
+                            <li>Asignaciones: <code>x = y + z;</code></li>
+                            <li>Condicionales: <code>if (x == y)</code></li>
+                            <li>Bucles: <code>while, for</code></li>
+                            <li>Funciones: <code>int suma(int a, int b)</code></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box-danger text-lg">
+                        <p class="font-bold mb-3 text-xl">❌ Limitaciones</p>
+                        <ul class="list-disc ml-6 space-y-2">
+                            <li>Solo tipo <code>int</code></li>
+                            <li>Máximo 4 parámetros</li>
+                            <li>Sin arrays</li>
+                            <li>Sin multiplicación / división</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3: Compilador C - Ejemplo -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-3">SEMANA 3</span> Ejemplo de Compilación</h2>
+                
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <p class="font-bold mb-4 text-2xl">📝 Código C</p>
+                        <pre><code class="language-c">int suma(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int x = 5, y = 3;
+    int z = suma(x, y);
+    return 0;
+}</code></pre>
+                    </div>
+                    
+                    <div>
+                        <p class="font-bold mb-4 text-2xl">📄 ASM Generado</p>
+                        <pre><code class="language-asm">func_suma:
+    SUMAR R0, R1
+    RETORNAR
+
+func_main:
+    MOVI R0, 5
+    MOVI R1, 3
+    LLAMAR func_suma
+    MOVER R6, R0
+    RETORNAR</code></pre>
+                    </div>
+                </div>
+
+                <div class="box-success text-xl mt-6 text-center">
+                    <p><strong>Convención:</strong> R0-R3 parámetros | R0 retorno | R4-R13 locales</p>
+                </div>
+            </section>
+
+            <!-- S3: Pseudo-instrucciones - Concepto -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-3">SEMANA 3</span> Pseudo-instrucciones</h2>
+                
+                <div class="box-success text-xl mb-8">
+                    <p class="font-bold mb-4 text-2xl">💡 Concepto</p>
+                    <p>Instrucciones "virtuales" que el ensamblador expande automáticamente a múltiples instrucciones reales.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6 text-lg">
+                    <div class="box">
+                        <p class="font-bold mb-3 text-xl">¿Por qué?</p>
+                        <ul class="list-disc ml-6 space-y-2">
+                            <li>ISA limitada (16 instrucciones)</li>
+                            <li>Sin PUSH, POP, CALL, RET nativos</li>
+                            <li>Abstraer operaciones complejas</li>
+                            <li>Facilitar programación</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-3 text-xl">Ventajas</p>
+                        <ul class="list-disc ml-6 space-y-2">
+                            <li>Código más legible</li>
+                            <li>Menos errores</li>
+                            <li>Reutilización de patrones</li>
+                            <li>Mantiene ISA simple</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3: Pseudo-instrucciones - Ejemplos -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-3">SEMANA 3</span> Pseudo-instrucciones: Ejemplos</h2>
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="box text-lg">
+                        <p class="font-bold mb-3 text-xl">EMPUJAR R5</p>
+                        <pre><code>→ GUARDAR R5, R14
+  MOVI R15, 1
+  RESTAR R14, R15</code></pre>
+                    </div>
+                    
+                    <div class="box text-lg">
+                        <p class="font-bold mb-3 text-xl">SACAR R5</p>
+                        <pre><code>→ MOVI R15, 1
+  SUMAR R14, R15
+  CARGAR R5, R14</code></pre>
+                    </div>
+                    
+                    <div class="box text-lg">
+                        <p class="font-bold mb-3 text-xl">LLAMAR etiqueta</p>
+                        <pre><code>→ MOVI R15, PC+5
+  EMPUJAR R15
+  SALTAR etiqueta</code></pre>
+                    </div>
+                    
+                    <div class="box text-lg">
+                        <p class="font-bold mb-3 text-xl">RETORNAR</p>
+                        <pre><code>→ SACAR R15
+  SALTAR R15</code></pre>
+                    </div>
+                </div>
+
+                <div class="box-success text-xl mt-6 text-center">
+                    <p><strong>4 pseudo-instrucciones</strong> → Gestión completa de stack y funciones</p>
+                </div>
+            </section>
+
+            <!-- S3: Estructuras de Control -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-3">SEMANA 3</span> 4.3 Estructuras de Control</h2>
+                
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                    <div class="phase-box">
+                        <p class="font-bold mb-1">IF</p>
+                        <pre><code class="language-c">if (a != b)
+    a = a + 1;</code></pre>
+                        <p class="text-xs mt-1">→ RESTAR + SZ + SALTAR</p>
+                    </div>
+                    
+                    <div class="phase-box">
+                        <p class="font-bold mb-1">WHILE</p>
+                        <pre><code class="language-c">while (i != 0)
+    i = i - 1;</code></pre>
+                        <p class="text-xs mt-1">→ Etiquetas + Bucle</p>
+                    </div>
+                    
+                    <div class="phase-box">
+                        <p class="font-bold mb-1">FOR</p>
+                        <pre><code class="language-c">for (i=0; i<10; i++)
+    sum += i;</code></pre>
+                        <p class="text-xs mt-1">→ While equivalente</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S3: Entregables -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-3">SEMANA 3</span> Entregables</h2>
+                
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ c_to_asm.c</p>
+                        <ul class="list-disc ml-4">
+                            <li>Asignaciones</li>
+                            <li>IF / WHILE / FOR</li>
+                            <li>Funciones con parámetros</li>
+                            <li>Convención R0-R3</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ Tests C</p>
+                        <ul class="list-disc ml-4">
+                            <li>test_c_simple.c ✓</li>
+                            <li>test_c_if.c ✓</li>
+                            <li>test_c_while.c ✓</li>
+                            <li>test_c_function.c ✓</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="stat-card mt-3 text-sm">
+                    <p class="font-bold">Pipeline: C → ASM → Binario → CPU ✓</p>
+                </div>
+            </section>
+
+            <!-- SEMANA 4: TÍTULO -->
+            <section class="center-content" data-background="#6b21a8">
+                <h1 class="text-4xl font-bold mb-4">SEMANA 4</h1>
+                <h2 class="text-3xl mb-6">Estructuras y Recursión Avanzada</h2>
+                <p class="text-xl">Integración Total del Sistema</p>
+            </section>
+
+            <!-- S4: Programación Estructurada -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-4">SEMANA 4</span> 5.4 Programación Estructurada</h2>
+                
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                    <div class="box">
+                        <p class="font-bold mb-1">Funciones</p>
+                        <p>Parámetros vía R0-R3</p>
+                        <p>Retorno vía R0</p>
+                        <p>Stack para anidamiento</p>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-1">Variables Locales</p>
+                        <p>R4-R13 locales</p>
+                        <p>Stack frame completo</p>
+                        <p>Preservación de contexto</p>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-1">Arreglos (simulado)</p>
+                        <p>Punteros base</p>
+                        <p>Offset calculado</p>
+                        <p>Acceso por registro</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S4: Recursión - Concepto -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-4">SEMANA 4</span> 6.2 Recursión</h2>
+                
+                <div class="box mb-6 text-xl">
+                    <p class="font-bold mb-4 text-2xl">Recursión: Función que se llama a sí misma</p>
+                    <p>Requiere gestión cuidadosa del stack para preservar contexto de cada llamada.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6 text-lg">
+                    <div class="box-success">
+                        <p class="font-bold mb-3 text-xl">✅ Requisitos</p>
+                        <ul class="list-disc ml-6 space-y-2">
+                            <li>Stack funcional (PUSH/POP)</li>
+                            <li>Preservar registros</li>
+                            <li>Caso base (condición de parada)</li>
+                            <li>Caso recursivo</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-3 text-xl">Casos Clásicos</p>
+                        <ul class="list-disc ml-6 space-y-2">
+                            <li><strong>Factorial:</strong> n! = n × (n-1)!</li>
+                            <li><strong>Fibonacci:</strong> F(n) = F(n-1) + F(n-2)</li>
+                            <li><strong>Torres Hanoi:</strong> Mover discos</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S4: Recursión - Código C -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-4">SEMANA 4</span> Factorial Recursivo en C</h2>
+                
+                <div class="box mb-6">
+                    <p class="font-bold mb-4 text-2xl">📝 Código C</p>
+                    <pre><code class="language-c">int factorial(int n) {
+    // Caso base
+    if (n == 0) {
+        return 1;
+    }
+    
+    // Caso recursivo
+    int result = n - 1;
+    result = factorial(result);  // Llamada recursiva
+    // result = n * result;       // (requiere multiplicación)
+    
+    return result;
+}
+
+// Uso:
+int main() {
+    int f5 = factorial(5);  // f5 = 120
+}</code></pre>
+                </div>
+                
+                <div class="box-danger text-xl text-center">
+                    <p><strong>⚠️ Nota:</strong> Multiplicación no implementada en ISA base</p>
+                </div>
+            </section>
+
+            <!-- S4: Recursión - Código ASM -->
+            <section>
+                <h2 class="text-4xl font-bold mb-6"><span class="week-badge week-4">SEMANA 4</span> Factorial en Ensamblador</h2>
+                
+                <div class="box mb-4">
+                    <p class="font-bold mb-4 text-2xl">📄 ASM Generado</p>
+                </div>
+                
+                <pre><code class="language-asm">func_factorial:
+    ; Verificar caso base: if (n == 0)
+    SNZ R0, not_zero
+    MOVI R0, 1
+    RETORNAR
+    
+not_zero:
+    ; Guardar n en el stack
+    EMPUJAR R0
+    
+    ; Calcular n - 1
+    MOVI R15, 1
+    RESTAR R0, R15
+    
+    ; Llamada recursiva: factorial(n-1)
+    LLAMAR func_factorial
+    
+    ; Recuperar n original
+    SACAR R1
+    
+    ; Aquí iría: R0 = R0 * R1 (resultado * n)
+    ; Por ahora solo retornamos el resultado parcial
+    
+    RETORNAR</code></pre>
+            </section>
+
+            <!-- S4: Sistema Integrado -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-4">SEMANA 4</span> Sistema Completo</h2>
+                
+                <div class="box text-xs mb-3">
+                    <p class="font-bold mb-2">Arquitectura Final</p>
+                    <div style="background: #1e293b; padding: 15px; border-radius: 8px;">
+                        <div class="grid grid-cols-5 gap-2 text-center">
+                            <div class="phase-box">programa.c</div>
+                            <div class="text-xl">→</div>
+                            <div class="phase-box">c_to_asm</div>
+                            <div class="text-xl">→</div>
+                            <div class="phase-box">programa.asm</div>
+                        </div>
+                        <div class="text-center text-2xl my-2">⬇</div>
+                        <div class="grid grid-cols-5 gap-2 text-center">
+                            <div class="phase-box">CPU</div>
+                            <div class="text-xl">←</div>
+                            <div class="phase-box">programa.mem</div>
+                            <div class="text-xl">←</div>
+                            <div class="phase-box">assembler</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                    <div class="stat-card">
+                        <p class="font-bold">CPU</p>
+                        <p class="text-xs">16 regs, 256 mem</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="font-bold">ASM</p>
+                        <p class="text-xs">16 inst + 4 pseudo</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="font-bold">Compilador</p>
+                        <p class="text-xs">C → ASM completo</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S4: Entregables -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3"><span class="week-badge week-4">SEMANA 4</span> Entregables Finales</h2>
+                
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ Sistema Integrado</p>
+                        <ul class="list-disc ml-4">
+                            <li>cpu_simulator.c ✓</li>
+                            <li>assembler.c ✓</li>
+                            <li>c_to_asm.c ✓</li>
+                            <li>main.c (integrador) ✓</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ Programas Recursivos</p>
+                        <ul class="list-disc ml-4">
+                            <li>Factorial ✓</li>
+                            <li>Fibonacci ✓</li>
+                            <li>Torres de Hanoi</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ Paper IEEE/ACM</p>
+                        <ul class="list-disc ml-4">
+                            <li>12-16 páginas</li>
+                            <li>4 secciones (S1-S4)</li>
+                            <li>Análisis experimental</li>
+                            <li>Métricas de rendimiento</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box-success">
+                        <p class="font-bold mb-2">✅ Presentación Final</p>
+                        <ul class="list-disc ml-4">
+                            <li>Demo en vivo</li>
+                            <li>Video 15-30 min</li>
+                            <li>Todos participan</li>
+                            <li>Defensa oral</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RESULTADOS GLOBALES -->
+            <section>
+                <h2 class="text-4xl font-bold mb-8">📊 Resultados del Proyecto</h2>
+                
+                <div class="grid grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card text-lg">
+                        <p class="text-5xl font-bold mb-2">256</p>
+                        <p class="text-xl">Words RAM</p>
+                    </div>
+                    <div class="stat-card text-lg">
+                        <p class="text-5xl font-bold mb-2">16</p>
+                        <p class="text-xl">Instrucciones</p>
+                    </div>
+                    <div class="stat-card text-lg">
+                        <p class="text-5xl font-bold mb-2">4</p>
+                        <p class="text-xl">Pseudo-ops</p>
+                    </div>
+                    <div class="stat-card text-lg">
+                        <p class="text-5xl font-bold mb-2">10+</p>
+                        <p class="text-xl">Tests ✓</p>
+                    </div>
+                </div>
+                
+                <div class="box text-lg">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b-2 border-blue-500">
+                                <th class="text-left py-3 text-xl">Componente</th>
+                                <th class="text-left py-3 text-xl">Archivo</th>
+                                <th class="text-left py-3 text-xl">LOC</th>
+                                <th class="text-left py-3 text-xl">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-600">
+                                <td class="py-3">CPU Simulada</td>
+                                <td class="font-mono">cpu_simulator.c</td>
+                                <td>~500</td>
+                                <td class="text-2xl">✅</td>
+                            </tr>
+                            <tr class="border-b border-gray-600">
+                                <td class="py-3">Ensamblador</td>
+                                <td class="font-mono">assembler.c</td>
+                                <td>~600</td>
+                                <td class="text-2xl">✅</td>
+                            </tr>
+                            <tr class="border-b border-gray-600">
+                                <td class="py-3">Compilador C</td>
+                                <td class="font-mono">c_to_asm.c</td>
+                                <td>~400</td>
+                                <td class="text-2xl">✅</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3">Integrador</td>
+                                <td class="font-mono">main.c</td>
+                                <td>~200</td>
+                                <td class="text-2xl">✅</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- DEMOSTRACIÓN -->
+            <section class="center-content">
+                <h2 class="text-5xl font-bold mb-8">🖥️ Demostración Completa</h2>
+                
+                <div class="box text-left text-lg">
+                    <p class="font-bold mb-6 text-center text-3xl">Pipeline Completo de Ejecución</p>
+                    <pre><code class="language-bash"># 1. Escribir programa en C
+cat > factorial.c << EOF
+int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n-1);
+}
+EOF
+
+# 2. Compilar C → ASM
+./bin/c_to_asm factorial.c > factorial.asm
+
+# 3. Ensamblar ASM → Binario
+./bin/assembler factorial.asm factorial.mem
+
+# 4. Ejecutar en CPU
+./bin/cpu_simulator factorial.mem
+
+# O todo en uno:
+./bin/main -e factorial.c</code></pre>
+                </div>
+
+                <div class="mt-8 text-3xl font-bold">
+                    <p>¿Preguntas? 🙋</p>
+                </div>
+            </section>
+
+            <!-- CONCLUSIONES -->
+            <section>
+                <h2 class="text-4xl font-bold mb-8">🎓 Conclusiones</h2>
+                
+                <div class="grid grid-cols-2 gap-6 text-lg">
+                    <div class="box-success">
+                        <p class="font-bold mb-4 text-2xl">Logros Principales</p>
+                        <ul class="list-disc ml-6 space-y-3">
+                            <li>✅ Sistema computacional completo funcional</li>
+                            <li>✅ Implementación Von Neumann → Alto nivel</li>
+                            <li>✅ Pipeline C→ASM→Binario→CPU operativo</li>
+                            <li>✅ Recursión implementada y probada</li>
+                            <li>✅ 4 semanas exitosamente integradas</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-4 text-2xl">Lecciones Aprendidas</p>
+                        <ul class="list-disc ml-6 space-y-3">
+                            <li>Importancia de abstracción por capas</li>
+                            <li>Hardware limita diseño de software</li>
+                            <li>Pseudo-instrucciones como puente efectivo</li>
+                            <li>Stack es fundamental para funciones</li>
+                            <li>Convenciones de llamada estandarizan</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="box-danger text-lg mt-6">
+                    <p class="font-bold mb-4 text-2xl">Limitaciones Actuales</p>
+                    <ul class="list-disc ml-6 space-y-2">
+                        <li>Solo tipo entero (no float, char, arrays, strings)</li>
+                        <li>Sin multiplicación/división nativa en ISA</li>
+                        <li>Memoria limitada a 256 words</li>
+                        <li>Sin sistema operativo ni servicios</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- TRABAJO FUTURO -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3">🚀 Trabajo Futuro</h2>
+                
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="box">
+                        <p class="font-bold mb-2">Extensiones de Hardware</p>
+                        <ul class="list-disc ml-4">
+                            <li>Multiplicador/Divisor HW</li>
+                            <li>Más memoria (4K words)</li>
+                            <li>Pipeline de instrucciones</li>
+                            <li>Cache L1</li>
+                            <li>Interrupciones</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="box">
+                        <p class="font-bold mb-2">Extensiones de Software</p>
+                        <ul class="list-disc ml-4">
+                            <li>Arrays y punteros</li>
+                            <li>Tipos de datos: float, char</li>
+                            <li>Librería estándar (printf, scanf)</li>
+                            <li>Optimizaciones del compilador</li>
+                            <li>Gestor de memoria dinámica</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- REFERENCIAS -->
+            <section>
+                <h2 class="text-2xl font-bold mb-3">📚 Referencias</h2>
+                
+                <div class="text-xs">
+                    <ol class="list-decimal ml-5 space-y-2">
+                        <li>
+                            <strong>Patterson, D. A., & Hennessy, J. L. (2017).</strong>
+                            <em>Computer Organization and Design (5th ed.).</em>
+                            Morgan Kaufmann.
+                        </li>
+                        <li>
+                            <strong>Aho, A. V., et al. (2006).</strong>
+                            <em>Compilers: Principles, Techniques, and Tools (2nd ed.).</em>
+                            Addison-Wesley.
+                        </li>
+                        <li>
+                            <strong>Tanenbaum, A. S. (2012).</strong>
+                            <em>Structured Computer Organization (6th ed.).</em>
+                            Pearson.
+                        </li>
+                        <li>
+                            <strong>Kernighan, B. W., & Ritchie, D. M. (1988).</strong>
+                            <em>The C Programming Language (2nd ed.).</em>
+                            Prentice Hall.
+                        </li>
+                    </ol>
+                </div>
+                
+                <div class="mt-4 box text-center">
+                    <p class="font-bold">Repositorio del Proyecto</p>
+                    <p class="font-mono text-xs">github.com/yayoscar/seminario-programacion-computadora</p>
+                </div>
+            </section>
+
+            <!-- PORTADA FINAL -->
+            <section class="center-content" data-background-gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                <h1 class="text-4xl font-bold mb-6">¡Gracias!</h1>
+                
+                <div class="text-xl mb-6">
+                    <p>🎓 Seminario de Programación de Computadoras</p>
+                    <p>Proyecto Completo: 4 Semanas</p>
+                </div>
+                
+                <div class="bg-white/10 p-6 rounded-lg mb-4">
+                    <p class="text-lg font-semibold mb-2">Equipo</p>
+                    <p>M.C.C. Aarón Antero Borboa Jaimes</p>
+                    <p>M. En I. Angel Manuel Mex Alvarez</p>
+                    <p>M.T.I. Oscar Pérez Olan</p>
+                </div>
+                
+                <div class="mt-6">
+                    <p class="text-lg">Universidad del Sur</p>
+                    <p class="text-lg">Doctorado en Sistemas Computacionales</p>
+                    <p>18 de noviembre de 2025</p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/x86asm.min.js"></script>
+    
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            transition: 'slide',
+            backgroundTransition: 'fade',
+            center: false,
+            width: 1920,
+            height: 1080,
+            margin: 0.05,
+            plugins: []
+        });
+        
+        hljs.highlightAll();
+        
+        Reveal.on('slidechanged', () => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        });
+    </script>
+</body>
+</html>

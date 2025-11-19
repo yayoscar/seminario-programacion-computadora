@@ -81,8 +81,8 @@ int main(int argc, char **argv) {
 void print_usage(const char *program_name) {
     printf("\n");
     printf("╔════════════════════════════════════════════════════════════╗\n");
-    printf("║      SIMULADOR CPU & ENSAMBLADOR - Herramienta Integrada  ║\n");
-    printf("║                    Español México                          ║\n");
+    printf("║      SIMULADOR CPU & ENSAMBLADOR - Herramienta Integrada   ║\n");
+    printf("║            Seminario Programacion de Computadora           ║\n");
     printf("╚════════════════════════════════════════════════════════════╝\n");
     printf("\n");
     printf("USO:\n");

@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include "../include/assembler.h"
 #include "../include/isa.h"
+#include "../include/isa_extended.h"
 
 // ============================================================================
 // FUNCIONES AUXILIARES
@@ -161,6 +162,112 @@ static int split_arguments(char *str, char **args, int max_args) {
     return count;
 }
 
+/**
+ * Detecta si un mnemónico es una pseudo-instrucción
+ * Retorna el código de pseudo-instrucción o -1 si no es pseudo-instrucción
+ */
+static int get_pseudo_opcode(const char *mnemonic) {
+    if (strcmp(mnemonic, "EMPUJAR") == 0 || strcmp(mnemonic, "PUSH") == 0) {
+        return PSEUDO_PUSH;
+    } else if (strcmp(mnemonic, "SACAR") == 0 || strcmp(mnemonic, "POP") == 0) {
+        return PSEUDO_POP;
+    } else if (strcmp(mnemonic, "LLAMAR") == 0 || strcmp(mnemonic, "CALL") == 0) {
+        return PSEUDO_CALL;
+    } else if (strcmp(mnemonic, "RETORNAR") == 0 || strcmp(mnemonic, "RET") == 0 || strcmp(mnemonic, "RETURN") == 0) {
+        return PSEUDO_RET;
+    }
+    return -1;
+}
+
+/**
+ * Expande una pseudo-instrucción en instrucciones reales
+ * Retorna el número de instrucciones generadas
+ */
+static int expand_pseudo_instruction(int pseudo_op, char **args, int arg_count, 
+                                       uint16_t *output, int max_instructions,
+                                       Assembler *asm_state, int current_addr) {
+    uint16_t expanded[MAX_PSEUDO_EXPANSION];
+    int count = 0;
+    
+    switch (pseudo_op) {
+        case PSEUDO_PUSH: {
+            // EMPUJAR Rs
+            if (arg_count < 1) {
+                fprintf(stderr, "[ERROR ENSAMBLADOR] EMPUJAR requiere 1 registro\n");
+                exit(1);
+            }
+            int rs = parse_register(args[0]);
+            if (rs < 0) {
+                fprintf(stderr, "[ERROR ENSAMBLADOR] Registro inválido en EMPUJAR: %s\n", args[0]);
+                exit(1);
+            }
+            count = expand_push(expanded, rs);
+            break;
+        }
+        
+        case PSEUDO_POP: {
+            // SACAR Rd
+            if (arg_count < 1) {
+                fprintf(stderr, "[ERROR ENSAMBLADOR] SACAR requiere 1 registro\n");
+                exit(1);
+            }
+            int rd = parse_register(args[0]);
+            if (rd < 0) {
+                fprintf(stderr, "[ERROR ENSAMBLADOR] Registro inválido en SACAR: %s\n", args[0]);
+                exit(1);
+            }
+            count = expand_pop(expanded, rd);
+            break;
+        }
+        
+        case PSEUDO_CALL: {
+            // LLAMAR direccion/etiqueta
+            if (arg_count < 1) {
+                fprintf(stderr, "[ERROR ENSAMBLADOR] LLAMAR requiere 1 argumento\n");
+                exit(1);
+            }
+            
+            // Resolver etiqueta a dirección
+            int target_addr = find_label(asm_state, args[0]);
+            if (target_addr < 0) {
+                // Intentar como número directo
+                if (isdigit(args[0][0]) || args[0][0] == '0') {
+                    target_addr = parse_number(args[0]);
+                } else {
+                    fprintf(stderr, "[ERROR ENSAMBLADOR] Etiqueta '%s' no encontrada para LLAMAR\n", args[0]);
+                    exit(1);
+                }
+            }
+            
+            // Expandir usando la función de isa_extended.h
+            count = expand_call(expanded, current_addr, target_addr);
+            break;
+        }
+        
+        case PSEUDO_RET: {
+            // RETORNAR (sin argumentos)
+            count = expand_ret(expanded);
+            break;
+        }
+        
+        default:
+            fprintf(stderr, "[ERROR ENSAMBLADOR] Pseudo-instrucción desconocida: %d\n", pseudo_op);
+            exit(1);
+    }
+    
+    // Copiar instrucciones expandidas a la salida
+    if (count > max_instructions) {
+        fprintf(stderr, "[ERROR ENSAMBLADOR] Expansión excede el límite de instrucciones\n");
+        exit(1);
+    }
+    
+    for (int i = 0; i < count; i++) {
+        output[i] = expanded[i];
+    }
+    
+    return count;
+}
+
 // ============================================================================
 // INICIALIZACIÓN Y LIMPIEZA
 // ============================================================================
@@ -231,8 +338,43 @@ static void first_pass(Assembler *asm_state) {
             }
         }
         
-        // Es una instrucción, incrementar dirección
-        address++;
+        // Parsear mnemónico para contar instrucciones correctamente
+        char mnemonic[64];
+        char arguments[MAX_LINE_LENGTH];
+        arguments[0] = '\0';
+        
+        int fields = sscanf(trimmed, "%63s %[^\n]", mnemonic, arguments);
+        if (fields < 1) {
+            continue;
+        }
+        
+        to_upper(mnemonic);
+        
+        // Verificar si es pseudo-instrucción
+        int pseudo_op = get_pseudo_opcode(mnemonic);
+        if (pseudo_op >= 0) {
+            // Es una pseudo-instrucción: contar según su expansión
+            switch (pseudo_op) {
+                case PSEUDO_PUSH:
+                    address += 3;  // GUARDAR + MOVI + RESTAR
+                    break;
+                case PSEUDO_POP:
+                    address += 3;  // MOVI + SUMAR + CARGAR
+                    break;
+                case PSEUDO_CALL:
+                    address += 4;  // EMPUJAR PC + SALTAR (expandido)
+                    break;
+                case PSEUDO_RET:
+                    address += 4;  // SACAR R15 + SALTAR (expandido)
+                    break;
+                default:
+                    address++;
+                    break;
+            }
+        } else {
+            // Es una instrucción normal, incrementar dirección
+            address++;
+        }
     }
     
     printf("[ENSAMBLADOR] Primera pasada completa. %d etiquetas encontradas.\n", asm_state->label_count);
@@ -293,7 +435,36 @@ static void second_pass(Assembler *asm_state) {
         
         to_upper(mnemonic);
         
-        // Obtener código de operación
+        // Verificar primero si es pseudo-instrucción
+        int pseudo_op = get_pseudo_opcode(mnemonic);
+        if (pseudo_op >= 0) {
+            // Expandir pseudo-instrucción
+            char *args[8];
+            int arg_count = 0;
+            if (fields > 1) {
+                arg_count = split_arguments(arguments, args, 8);
+            }
+            
+            uint16_t expanded[MAX_PSEUDO_EXPANSION];
+            int exp_count = expand_pseudo_instruction(pseudo_op, args, arg_count, expanded, MAX_PSEUDO_EXPANSION, asm_state, address);
+            
+            // Agregar instrucciones expandidas al programa
+            for (int j = 0; j < exp_count; j++) {
+                if (address >= MAX_PROGRAM_SIZE) {
+                    fprintf(stderr, "[ERROR ENSAMBLADOR] Programa excede tamaño máximo\n");
+                    exit(1);
+                }
+                asm_state->program[address++] = expanded[j];
+                asm_state->program_length++;
+            }
+            
+            printf("[ENSAMBLADOR] 0x%04X: %s expandida a %d instrucciones\n", 
+                   address - exp_count, mnemonic, exp_count);
+            
+            continue;  // Siguiente línea
+        }
+        
+        // Obtener código de operación normal
         int opcode = get_opcode(mnemonic);
         if (opcode < 0) {
             fprintf(stderr, "[ERROR ENSAMBLADOR] Instrucción desconocida '%s' en línea %d\n", 
@@ -352,7 +523,7 @@ static void second_pass(Assembler *asm_state) {
                 operand = 0;
                 
             } else if (opcode == OP_CARGAR || opcode == OP_GUARDAR) {
-                // Rd, [addr] o Rd, addr
+                // Rd, [addr] o Rd, addr o Rd, [Rs] (direccionamiento indirecto)
                 if (arg_count < 2) {
                     fprintf(stderr, "[ERROR ENSAMBLADOR] %s requiere 2 argumentos en línea %d\n", 
                             mnemonic, i + 1);
@@ -362,13 +533,23 @@ static void second_pass(Assembler *asm_state) {
                 
                 // Eliminar corchetes si existen
                 char *addr_str = args[1];
+                bool is_indirect = false;
                 if (addr_str[0] == '[') {
+                    is_indirect = true;
                     addr_str++;
                     char *end = strchr(addr_str, ']');
                     if (end) *end = '\0';
                 }
                 
-                operand = parse_number(addr_str) & 0xFF;
+                // Intentar parsear como registro (direccionamiento indirecto)
+                int rs = parse_register(addr_str);
+                if (rs >= 0 && is_indirect) {
+                    // Direccionamiento indirecto: CARGAR Rd, [Rs]
+                    operand = rs & 0xFF;
+                } else {
+                    // Direccionamiento directo: CARGAR Rd, addr
+                    operand = parse_number(addr_str) & 0xFF;
+                }
                 
             } else if (opcode == OP_SALTAR) {
                 // JMP addr o JMP label

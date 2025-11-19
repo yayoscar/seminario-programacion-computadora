@@ -15,6 +15,7 @@
 #define MAX_LINES       8192    // Máximo número de líneas en un archivo .asm
 #define MAX_LABELS      1024    // Máximo número de etiquetas
 #define MAX_LINE_LENGTH 256     // Longitud máxima de una línea
+#define MAX_PROGRAM_SIZE 256    // Tamaño máximo del programa en palabras (coincide con memoria CPU)
 
 // ============================================================================
 // ESTRUCTURAS

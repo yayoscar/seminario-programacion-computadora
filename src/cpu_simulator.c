@@ -245,27 +245,59 @@ void cpu_decode_execute(CPU *cpu) {
             
         case OP_CARGAR:
             // LOAD Rd, [addr] -> Rd = MEM[addr]
-            if (operand >= MEMORY_SIZE) {
-                fprintf(stderr, "[ERROR CPU] LOAD dirección fuera de límites: 0x%02X\n", operand);
-                cpu->halted = true;
-                return;
+            // Soporta direccionamiento indirecto: si operand < 16, usar R[operand] como dirección
+            {
+                uint16_t address;
+                if (operand < NUM_REGISTERS) {
+                    // Direccionamiento indirecto: CARGAR Rd, [Rs]
+                    address = cpu->R[operand];
+                } else {
+                    // Direccionamiento directo: CARGAR Rd, addr
+                    address = operand;
+                }
+                
+                if (address >= MEMORY_SIZE) {
+                    fprintf(stderr, "[ERROR CPU] LOAD dirección fuera de límites: 0x%04X\n", address);
+                    cpu->halted = true;
+                    return;
+                }
+                cpu->R[rd] = cpu->memory[address];
             }
-            cpu->R[rd] = cpu->memory[operand];
             break;
             
         case OP_GUARDAR:
             // STORE Rd, [addr] -> MEM[addr] = Rd
-            if (operand >= MEMORY_SIZE) {
-                fprintf(stderr, "[ERROR CPU] STORE dirección fuera de límites: 0x%02X\n", operand);
-                cpu->halted = true;
-                return;
+            // Soporta direccionamiento indirecto: si operand < 16, usar R[operand] como dirección
+            {
+                uint16_t address;
+                if (operand < NUM_REGISTERS) {
+                    // Direccionamiento indirecto: GUARDAR Rd, [Rs]
+                    address = cpu->R[operand];
+                } else {
+                    // Direccionamiento directo: GUARDAR Rd, addr
+                    address = operand;
+                }
+                
+                if (address >= MEMORY_SIZE) {
+                    fprintf(stderr, "[ERROR CPU] STORE dirección fuera de límites: 0x%04X\n", address);
+                    cpu->halted = true;
+                    return;
+                }
+                cpu->memory[address] = cpu->R[rd];
             }
-            cpu->memory[operand] = cpu->R[rd];
             break;
             
         case OP_SALTAR:
             // JMP addr -> PC = addr (salto incondicional)
-            cpu->PC = operand;
+            // Si Rd != 0: salto indirecto PC = R[Rd]
+            // Si Rd == 0: salto directo PC = operand
+            if (rd != 0 && rd < NUM_REGISTERS) {
+                // Salto indirecto: SALTAR Rs (donde Rs está en campo Rd)
+                cpu->PC = cpu->R[rd];
+            } else {
+                // Salto directo: SALTAR addr
+                cpu->PC = operand;
+            }
             break;
             
         case OP_SZ:
