@@ -1,5 +1,37 @@
 # Simulador de CPU con Pipeline Completo
 
+## 🚀 Inicio Rápido
+
+### Linux / macOS
+```bash
+# 1. Clonar o descargar el proyecto
+git clone <repo-url>
+cd seminario-programacion-computadora
+
+# 2. Compilar
+make
+
+# 3. Ejecutar un ejemplo
+./bin/main -e asm/programa.asm
+```
+
+### Windows (WSL - Recomendado)
+```bash
+# En WSL Ubuntu
+sudo apt-get install build-essential
+make
+./bin/main -e asm/programa.asm
+```
+
+### Windows (MinGW/MSYS2)
+```cmd
+REM En CMD o PowerShell
+mingw32-make
+bin\main.exe -e asm\programa.asm
+```
+
+---
+
 ## Descripción del Proyecto
 
 Simulador educativo completo de una computadora con ISA de 16 bits y mnemónicos en español. Implementa el flujo completo desde código C hasta ejecución en CPU simulada.
@@ -116,70 +148,396 @@ seminario-programacion-computadora/
 
 ---
 
-## Compilación y Uso
+## 💻 Requisitos del Sistema
 
-### Requisitos
+### Linux
+- **Compilador**: GCC o Clang
+- **Build tools**: Make
+- **Sistema**: Cualquier distribución moderna
 
-- GCC (o Clang)
-- Make
-## 🔧 Compilación y Uso
+```bash
+# Ubuntu/Debian
+sudo apt-get install build-essential
+
+# Fedora/RHEL
+sudo dnf install gcc make
+
+# Arch
+sudo pacman -S base-devel
+```
+
+### macOS
+- **Xcode Command Line Tools**
+```bash
+xcode-select --install
+```
+- Alternativamente: Homebrew + GCC
+```bash
+brew install gcc make
+```
+
+### Windows
+**Opción 1: WSL (Recomendado)**
+```powershell
+# En PowerShell como administrador
+wsl --install
+# Reiniciar, luego dentro de WSL:
+sudo apt-get update && sudo apt-get install build-essential
+```
+
+**Opción 2: MinGW-w64**
+- Descargar de: https://www.mingw-w64.org/
+- Instalar y agregar `bin/` al PATH de Windows
+- Usar `mingw32-make` en lugar de `make`
+
+**Opción 3: MSYS2**
+- Descargar de: https://www.msys2.org/
+- Instalar paquetes:
+```bash
+pacman -S mingw-w64-x86_64-gcc make
+```
+
+---
+
+## 🔧 Compilación
 
 ### Compilar todo el proyecto
 
+**Linux / macOS / WSL:**
 ```bash
+cd /ruta/al/proyecto
 make
 ```
 
-### Ejecutar el pipeline completo (ensamblar + simular)
+**Windows (PowerShell con MinGW):**
+```powershell
+cd C:\ruta\al\proyecto
+mingw32-make
+```
+
+**Windows (MSYS2 bash):**
+```bash
+cd /c/ruta/al/proyecto
+make
+```
+
+**Salida esperada:**
+```
+✓ Main program compiled 
+✓ Assembler compiled 
+✓ C to ASM compiler compiled 
+✓ Build complete!
+```
+
+### Limpiar archivos generados
 
 ```bash
+make clean
+```
+
+---
+
+## 🚀 Pipeline Completo: C → ASM → Binario → CPU
+
+Este proyecto implementa el **flujo completo** desde código de alto nivel hasta ejecución en CPU:
+
+### Paso 1: Escribir código C
+
+Archivo `tests/test_c_simple_func.c`:
+```c
+int suma(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int x = 5;
+    int y = 3;
+    int z = suma(x, y);
+    return z;
+}
+```
+
+### Paso 2: Compilar C → Ensamblador
+
+```bash
+./bin/c_to_asm tests/test_c_simple_func.c tests/test_c_simple_func.asm
+```
+
+Genera `test_c_simple_func.asm` con código ensamblador:
+```assembly
+func_suma:
+    CARGAR R0, 248        ; Cargar param a
+    CARGAR R1, 249        ; Cargar param b
+    SUMAR R0, R1          ; a + b
+    GUARDAR R0, 250       ; Guardar retorno
+    RETORNAR              ; Regresar
+
+func_main:
+    MOVI R4, 5            ; int x = 5
+    MOVI R5, 3            ; int y = 3
+    GUARDAR R4, 248       ; Pasar param 1
+    GUARDAR R5, 249       ; Pasar param 2
+    LLAMAR func_suma      ; Llamar función
+    CARGAR R6, 250        ; z = retorno
+    MOVER R0, R6          ; return z
+    RETORNAR
+
+inicio:
+    SALTAR func_main      ; Punto de entrada
+    ALTO
+```
+
+### Paso 3: Ensamblar ASM → Binario
+
+```bash
+./bin/assembler tests/test_c_simple_func.asm tests/test_c_simple_func.mem
+```
+
+Genera `test_c_simple_func.mem` con código máquina:
+```
+A009    ; SALTAR func_main (expandido)
+F000    ; ALTO
+80F8    ; CARGAR R0, 248
+91F9    ; CARGAR R1, 249
+3001    ; SUMAR R0, R1
+90FA    ; GUARDAR R0, 250
+...     ; RETORNAR (expandido a 4 instrucciones)
+```
+
+### Paso 4: Ejecutar en CPU Simulada
+
+```bash
+./bin/cpu_simulator tests/test_c_simple_func.mem
+```
+
+Resultado:
+```
+[CPU] Programa cargado: 30 instrucciones
+[CPU] Iniciando ejecución...
+[CPU] R6 = 0x0008  (z = suma(5,3) = 8)
+[CPU] Ejecución completada en 161 ciclos
+```
+
+### Pipeline Automático (Un Solo Comando)
+
+**Linux / macOS / WSL:**
+```bash
+# Desde archivo C
+./bin/c_to_asm tests/test_c_simple_func.c /tmp/temp.asm && \
+./bin/main -e /tmp/temp.asm
+
+# Desde archivo ASM
+./bin/main -e tests/test_c_simple_func.asm
+```
+
+**Windows (CMD):**
+```cmd
+REM Desde archivo ASM
+bin\main.exe -e tests\test_c_simple_func.asm
+```
+
+**Windows (PowerShell):**
+```powershell
+# Desde archivo C
+.\bin\c_to_asm.exe tests\test_c_simple_func.c temp.asm; .\bin\main.exe -e temp.asm
+
+# Desde archivo ASM
+.\bin\main.exe -e tests\test_c_simple_func.asm
+```
+
+---
+
+## 📖 Guía de Ejecución por Plataforma
+
+### Linux
+
+```bash
+# 1. Compilar el proyecto
+make
+
+# 2. Ejecutar pipeline completo (ejemplo)
 ./bin/main -e asm/programa.asm
-# o usando el nombre largo:
-./bin/main --completo asm/programa.asm
+
+# 3. Solo ensamblar
+./bin/assembler asm/programa.asm asm/programa.mem
+
+# 4. Solo ejecutar
+./bin/cpu_simulator asm/programa.mem
+
+# 5. Compilar C a ASM
+./bin/c_to_asm tests/test_c_simple_func.c tests/output.asm
 ```
 
-Salida:
-```
-[Ensamblador] Ensamblando 'asm/programa.asm' → 'asm/programa.mem'...
-[Ensamblador] ¡Ensamblado exitoso!
-[Simulador] Cargando programa desde 'asm/programa.mem'...
-[Simulador] Programa cargado. 12 palabras.
-[Simulador] === Inicio de Ejecución ===
-[OUT] R0 = 55
-[Simulador] === CPU Detenida (ALTO) ===
-[Simulador] Ciclos ejecutados: 86
-```
-
-### Solo ensamblar (sin ejecutar)
+### macOS
 
 ```bash
-./bin/main -a asm/programa.asm asm/programa.mem
-# o usando el nombre largo:
-./bin/main --ensamblar asm/programa.asm asm/programa.mem
+# Idéntico a Linux
+make
+./bin/main -e asm/programa.asm
 ```
 
-Genera el archivo `asm/programa.mem` con el código máquina en hexadecimal.
-
-### Solo simular (programa ya ensamblado)
+### Windows (WSL) - Recomendado
 
 ```bash
-./bin/main -r asm/programa.mem
-# o usando el nombre largo:
-./bin/main --ejecutar asm/programa.mem
+# Dentro de WSL (Ubuntu), igual que Linux
+cd /mnt/c/Users/TuUsuario/proyecto
+make
+./bin/main -e asm/programa.asm
 ```
 
-### Ejecutar pruebas
+### Windows (Nativo con MinGW)
 
+```cmd
+REM 1. Compilar
+mingw32-make
+
+REM 2. Ejecutar pipeline completo
+bin\main.exe -e asm\programa.asm
+
+REM 3. Solo ensamblar
+bin\assembler.exe asm\programa.asm asm\programa.mem
+
+REM 4. Solo ejecutar
+bin\cpu_simulator.exe asm\programa.mem
+
+REM 5. Compilar C a ASM
+bin\c_to_asm.exe tests\test_c_simple_func.c tests\output.asm
+```
+
+### Windows (PowerShell)
+
+```powershell
+# 1. Compilar
+mingw32-make
+
+# 2. Ejecutar pipeline completo
+.\bin\main.exe -e asm\programa.asm
+
+# 3. Compilar C a ASM
+.\bin\c_to_asm.exe tests\test_c_simple_func.c tests\output.asm
+```
+
+### Troubleshooting
+
+**Linux/macOS:**
+- Si `make` falla: verificar que GCC esté instalado con `gcc --version`
+- Permisos: `chmod +x bin/*`
+
+**Windows:**
+- Si los .exe no se encuentran: verificar que MinGW esté en el PATH
+- En PowerShell: usar `.\bin\` en lugar de `bin\`
+- Error de compilación: verificar que `gcc` y `make` estén disponibles
+
+---
+
+## 🌟 PLUS: Compilador Bilingüe (C Español)
+
+### Característica Especial
+
+Nuestro compilador soporta **sintaxis C en ESPAÑOL**, permitiendo escribir código con palabras clave en nuestro idioma:
+
+**Palabras clave soportadas:**
+
+| Inglés | Español | Uso |
+|--------|---------|-----|
+| `int` | `entero` | Tipo de datos |
+| `return` | `retornar` | Retorno de función |
+| `if` | `si` | Condicional |
+| `while` | `mientras` | Bucle |
+| `for` | `para` | Bucle con contador |
+
+### Ejemplo en C Español
+
+Archivo `tests/test_ces_main_only.c`:
+```c
+// C Español (CES)
+entero main() {
+    entero resultado = 42;
+    retornar resultado;
+}
+```
+
+### Compilar C Español → ASM → CPU
+
+```bash
+# Paso 1: C Español → ASM
+./bin/c_to_asm tests/test_ces_main_only.c tests/test_ces_main_only.asm
+
+# Paso 2: Pipeline completo (ASM → Binario → CPU)
+./bin/main -e tests/test_ces_main_only.asm
+```
+
+**Resultado:**
+```
+[CPU] R0 = 0x002A  (42 en decimal)
+[CPU] Ejecución completada en 41 ciclos
+```
+
+### Ejemplos Disponibles
+
+| Test en Español | Descripción | Características | Ciclos |
+|-----------------|-------------|-----------------|--------|
+| `test_ces_main_only.c` | Programa simple (solo main) | Variables, asignaciones | 77 |
+| `test_ces_simple_func.c` | Función suma con parámetros | Funciones, llamadas | 161 |
+| `test_ces_function.c` | Función duplicar valor | Parámetros | 137 |
+| `test_ces_factorial.c` | Función factorial simplificada | Funciones | 137 |
+| `test_ces_fibonacci.c` | Función fibonacci simplificada | Funciones | 137 |
+| `test_ces_if.c` | Condicional con `si` | **if/si** | 65 |
+| `test_ces_while.c` | Bucle con `mientras` | **while/mientras** | 53 |
+| `test_ces_for.c` | Bucle con `para` | **for/para** | 53 |
+
+**Total**: 8 tests completos
+
+**Validación**: Todos los tests compilan y ejecutan correctamente en el pipeline completo ✓
+
+### Notas sobre C Español
+
+- ✅ **Soportado**: `entero`, `retornar`, `si`, `mientras`, `para`
+- ✅ **Estructuras de control**: Condicionales y bucles completos
+- ✅ **Validado**: 8 tests funcionales con todas las características
+- ⚠️ **Limitación**: Expresiones simples (sin operadores complejos anidados)
+- 🎯 **Objetivo**: Didáctico, para entender compiladores sin barrera del idioma
+
+---
+
+## 🔧 Uso de las Herramientas
+
+### Ejecutar Tests
+
+**Linux / macOS / WSL:**
 ```bash
 make test
 ```
 
-Esto ejecuta todos los programas de prueba en la carpeta `tests/`.
+**Windows (CMD/PowerShell):**
+```cmd
+mingw32-make test
+```
 
-### Limpiar binarios y archivos generados
+### Ejemplos Rápidos por Plataforma
 
+**Linux / macOS:**
 ```bash
-make clean
+# Pipeline completo
+./bin/main -e asm/programa.asm
+
+# Solo ensamblar
+./bin/main -a asm/programa.asm asm/programa.mem
+
+# Solo ejecutar
+./bin/main -r asm/programa.mem
+```
+
+**Windows:**
+```cmd
+REM Pipeline completo
+bin\main.exe -e asm\programa.asm
+
+REM Solo ensamblar
+bin\main.exe -a asm\programa.asm asm\programa.mem
+
+REM Solo ejecutar
+bin\main.exe -r asm\programa.mem
 ```
 
 ---
@@ -188,50 +546,61 @@ make clean
 
 El programa principal (`main`) acepta las siguientes opciones:
 
-### Ayuda
+### Opciones de Línea de Comandos
 
+**Ayuda:**
 ```bash
+# Linux/macOS
 ./bin/main -h
-./bin/main --ayuda
+
+# Windows
+bin\main.exe -h
 ```
 
-Muestra:
+**Opciones disponibles:**
 ```
-Uso: ./bin/main [opciones] <archivo>
-
-Opciones:
-  -h, --ayuda       Mostrar esta ayuda
-  -a, --ensamblar   Solo ensamblar (genera .mem)
-  -r, --ejecutar    Solo ejecutar archivo .mem
-  -e, --completo    Pipeline completo (ensamblar + ejecutar)
-
-Ejemplos:
-  ./bin/main -e programa.asm        # Ensamblar y ejecutar
-  ./bin/main -a programa.asm        # Solo ensamblar
-  ./bin/main -r programa.mem        # Solo ejecutar
+-h, --ayuda       Mostrar ayuda
+-a, --ensamblar   Solo ensamblar (genera .mem)
+-r, --ejecutar    Solo ejecutar archivo .mem
+-e, --completo    Pipeline completo (ensamblar + ejecutar)
 ```
 
-### 1. Pipeline Completo (Ensamblar + Ejecutar)
+### Ejemplos de Uso
 
+**1. Pipeline Completo (Ensamblar + Ejecutar)**
+
+Linux/macOS:
 ```bash
 ./bin/main -e asm/programa.asm
-./bin/main --completo asm/programa.asm
 ```
 
-### 2. Solo Ensamblar
+Windows:
+```cmd
+bin\main.exe -e asm\programa.asm
+```
 
+**2. Solo Ensamblar**
+
+Linux/macOS:
 ```bash
 ./bin/main -a asm/programa.asm asm/programa.mem
-./bin/main --ensamblar asm/programa.asm asm/programa.mem
 ```
 
-Genera el archivo `asm/programa.mem` con el código máquina.
+Windows:
+```cmd
+bin\main.exe -a asm\programa.asm asm\programa.mem
+```
 
-### 3. Solo Ejecutar (archivo .mem ya ensamblado)
+**3. Solo Ejecutar (archivo .mem ya ensamblado)**
 
+Linux/macOS:
 ```bash
 ./bin/main -r asm/programa.mem
-./bin/main --ejecutar asm/programa.mem
+```
+
+Windows:
+```cmd
+bin\main.exe -r asm\programa.mem
 ```
 
 ---

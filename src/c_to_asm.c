@@ -1,14 +1,21 @@
 /**
- * c_to_asm.c - Versión Semana 3 Completa
+ * c_to_asm.c - Versión Semana 3 Completa con Soporte Bilingüe
  * Compilador simplificado de C a ASM para la ISA de 16 bits
  * 
- * Soporta:
- * - Declaraciones: int x;
+ * Soporta sintaxis en ESPAÑOL e INGLÉS:
+ * - Declaraciones: int/entero x;
  * - Asignaciones: x = 5; x = y + z;
- * - Condicionales: if (x == y) { ... }
- * - Bucles: while (x != 0) { ... } y for
- * - Funciones simples con return
+ * - Condicionales: if/si (x == y) { ... }
+ * - Bucles: while/mientras (x != 0) { ... } y for/para
+ * - Funciones simples con return/retornar
  * - Llamadas a funciones
+ * 
+ * Palabras clave soportadas:
+ * - int/entero - tipo de datos
+ * - if/si - condicional
+ * - while/mientras - bucle
+ * - for/para - bucle contador
+ * - return/retornar - retorno de función
  * 
  * Convención de llamada:
  * - Parámetros: R0-R3 (hasta 4 parámetros)
@@ -150,7 +157,7 @@ static void emit(const char *format, ...) {
 }
 
 static void compile_declaration(Compiler *c, const char *line) {
-    // int x; o int x = 5;
+    // int/entero x; o int/entero x = 5;
     char type[64], rest[256];
     if (sscanf(line, "%s %[^;]", type, rest) == 2) {
         char *var_name = rest;
@@ -281,9 +288,16 @@ static void compile_assignment(Compiler *c, const char *line) {
 }
 
 static void compile_if(Compiler *c, const char *line) {
-    // if (x == y) { o if (x != y) {
+    // if/si (x == y) { o if/si (x != y) {
     char var1[64], op[4], var2[64];
-    if (sscanf(line, "if ( %s %s %[^)]", var1, op, var2) == 3) {
+    
+    // Intentar parsear con 'if' o 'si'
+    int parsed = sscanf(line, "if ( %s %s %[^)]", var1, op, var2);
+    if (parsed != 3) {
+        parsed = sscanf(line, "si ( %s %s %[^)]", var1, op, var2);
+    }
+    
+    if (parsed == 3) {
         char *v1 = trim(var1);
         char *v2 = trim(var2);
         char *operator = trim(op);
@@ -315,9 +329,16 @@ static void compile_if(Compiler *c, const char *line) {
 }
 
 static void compile_while(Compiler *c, const char *line) {
-    // while (x != 0) {
+    // while/mientras (x != 0) {
     char var1[64], op[4], var2[64];
-    if (sscanf(line, "while ( %s %s %[^)]", var1, op, var2) == 3) {
+    
+    // Intentar parsear con 'while' o 'mientras'
+    int parsed = sscanf(line, "while ( %s %s %[^)]", var1, op, var2);
+    if (parsed != 3) {
+        parsed = sscanf(line, "mientras ( %s %s %[^)]", var1, op, var2);
+    }
+    
+    if (parsed == 3) {
         char *v1 = trim(var1);
         char *v2 = trim(var2);
         char *operator = trim(op);
@@ -389,7 +410,7 @@ static void compile_closing_brace(Compiler *c) {
 }
 
 static void compile_function_definition(Compiler *c, const char *line) {
-    // int suma(int a, int b) {
+    // int/entero suma(int/entero a, int/entero b) {
     char ret_type[64], func_name[64], params[256];
     
     // Extraer nombre de función y parámetros
@@ -401,7 +422,7 @@ static void compile_function_definition(Compiler *c, const char *line) {
         return;
     }
     
-    // Obtener nombre de función
+    // Obtener nombre de función (soporta 'int' y 'entero')
     *paren_open = '\0';
     sscanf(line, "%s %s", ret_type, func_name);
     *paren_open = '(';
@@ -456,9 +477,16 @@ static void compile_function_definition(Compiler *c, const char *line) {
 }
 
 static void compile_return(Compiler *c, const char *line) {
-    // return x; o return 5;
+    // return/retornar x; o return/retornar 5;
     char value[128];
-    if (sscanf(line, "return %[^;]", value) == 1) {
+    
+    // Intentar parsear con 'return' o 'retornar'
+    int parsed = sscanf(line, "return %[^;]", value);
+    if (parsed != 1) {
+        parsed = sscanf(line, "retornar %[^;]", value);
+    }
+    
+    if (parsed == 1) {
         char *val = trim(value);
         
         emit("; return %s", val);
@@ -548,10 +576,10 @@ static void compile_function_call(Compiler *c, const char *lhs, const char *call
 }
 
 static void compile_for(Compiler *c, const char *line) {
-    // for (int i = 0; i < 10; i++) {
+    // for/para (int/entero i = 0; i < 10; i++) {
     char init[128], cond[128], incr[128];
     
-    // Extraer las tres partes del for
+    // Extraer las tres partes del for (funciona igual para 'for' y 'para')
     char *paren_open = strchr(line, '(');
     char *paren_close = strchr(line, ')');
     
@@ -584,10 +612,10 @@ static void compile_for(Compiler *c, const char *line) {
     
     int label = get_next_label(c);
     
-    emit("; for (%s; %s; %s)", trim(init), trim(cond), trim(incr));
+    emit("; for/para (%s; %s; %s)", trim(init), trim(cond), trim(incr));
     
-    // Inicialización
-    if (strstr(init, "int ") == init) {
+    // Inicialización (soporta int/entero)
+    if (strstr(init, "int ") == init || strstr(init, "entero ") == init) {
         compile_declaration(c, init);
     } else if (strchr(init, '=')) {
         compile_assignment(c, init);
@@ -676,16 +704,17 @@ void compile_c_to_asm(const char *input_file, const char *output_file) {
             continue;
         }
         
-        // Detectar definiciones de funciones (int nombre(...) {)
-        if (strncmp(trimmed, "int ", 4) == 0 && strchr(trimmed, '(') && strchr(trimmed, ')')) {
+        // Detectar definiciones de funciones (int/entero nombre(...) {)
+        if ((strncmp(trimmed, "int ", 4) == 0 || strncmp(trimmed, "entero ", 7) == 0) 
+            && strchr(trimmed, '(') && strchr(trimmed, ')')) {
             compile_function_definition(&compiler, trimmed);
             
-        // Declaraciones de variables
-        } else if (strncmp(trimmed, "int ", 4) == 0) {
+        // Declaraciones de variables (int/entero)
+        } else if (strncmp(trimmed, "int ", 4) == 0 || strncmp(trimmed, "entero ", 7) == 0) {
             compile_declaration(&compiler, trimmed);
             
-        // Return statement
-        } else if (strncmp(trimmed, "return", 6) == 0) {
+        // Return statement (return/retornar)
+        } else if (strncmp(trimmed, "return", 6) == 0 || strncmp(trimmed, "retornar", 8) == 0) {
             compile_return(&compiler, trimmed);
             
         // Llamadas a funciones: x = func(...);
@@ -699,16 +728,16 @@ void compile_c_to_asm(const char *input_file, const char *output_file) {
         } else if (strchr(trimmed, '=') && strchr(trimmed, ';')) {
             compile_assignment(&compiler, trimmed);
             
-        // Condicional if
-        } else if (strncmp(trimmed, "if ", 3) == 0) {
+        // Condicional if/si
+        } else if (strncmp(trimmed, "if ", 3) == 0 || strncmp(trimmed, "si ", 3) == 0) {
             compile_if(&compiler, trimmed);
             
-        // Bucle while
-        } else if (strncmp(trimmed, "while ", 6) == 0) {
+        // Bucle while/mientras
+        } else if (strncmp(trimmed, "while ", 6) == 0 || strncmp(trimmed, "mientras ", 9) == 0) {
             compile_while(&compiler, trimmed);
             
-        // Bucle for
-        } else if (strncmp(trimmed, "for ", 4) == 0) {
+        // Bucle for/para
+        } else if (strncmp(trimmed, "for ", 4) == 0 || strncmp(trimmed, "para ", 5) == 0) {
             compile_for(&compiler, trimmed);
             
         // Cierre de bloque
