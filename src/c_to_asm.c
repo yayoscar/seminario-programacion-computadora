@@ -50,6 +50,14 @@ typedef struct {
     int label_id;
 } FunctionInfo;
 
+typedef enum {
+    BLOCK_NONE,
+    BLOCK_IF,
+    BLOCK_WHILE,
+    BLOCK_FOR,
+    BLOCK_FUNCTION
+} BlockType;
+
 typedef struct {
     Variable vars[MAX_VARS];
     int var_count;
@@ -60,6 +68,8 @@ typedef struct {
     FunctionInfo *current_function;
     int next_local_reg;  // Siguiente registro para variables locales (empieza en 4)
     bool function_has_explicit_return;  // Flag para evitar RETORNAR duplicado
+    BlockType block_stack[32];
+    int block_stack_top;
 } Compiler;
 
 // ============================================================================
@@ -95,8 +105,12 @@ static int allocate_register(Compiler *c, const char *name, bool is_param) {
         // Parámetros en R0-R3
         reg = c->var_count;
     } else {
-        // Variables locales en R4-R13
+        // Variables locales en R4-R11 (R12 reservado como temporal, R13 para LLAMAR, R14=SP, R15=FLAGS)
         reg = 4 + c->next_local_reg++;
+        if (reg > 11) {
+            fprintf(stderr, "[ERROR COMPILADOR] Demasiadas variables locales (máx: 8)\n");
+            exit(1);
+        }
     }
     
     strncpy(c->vars[c->var_count].name, name, 63);
@@ -261,18 +275,38 @@ static void compile_assignment(Compiler *c, const char *line) {
                 char *v1 = trim(op1);
                 char *v2 = trim(op2);
                 
-                int r1 = find_variable(c, v1);
-                int r2 = find_variable(c, v2);
-                
-                if (r1 < 0 || r2 < 0) {
-                    fprintf(stderr, "[ERROR COMPILADOR] Variable no declarada en resta\n");
-                    exit(1);
+                int r1, r2;
+                if (is_number(v1)) {
+                    r1 = 15;  // Temporal
+                    emit("MOVI R15, %s", v1);
+                } else {
+                    r1 = find_variable(c, v1);
+                    if (r1 < 0) {
+                        fprintf(stderr, "[ERROR COMPILADOR] Variable '%s' no declarada\n", v1);
+                        exit(1);
+                    }
                 }
                 
-                if (r1 != dest_reg) {
-                    emit("MOVER R%d, R%d", dest_reg, r1);
+                if (is_number(v2)) {
+                    // Copiar primer operando a destino si es necesario
+                    if (r1 != dest_reg) {
+                        emit("MOVER R%d, R%d", dest_reg, r1);
+                    }
+                    r2 = 15;
+                    emit("MOVI R15, %s", v2);
+                    emit("RESTAR R%d, R15  ; %s = %s - %s", dest_reg, var_name, v1, v2);
+                } else {
+                    r2 = find_variable(c, v2);
+                    if (r2 < 0) {
+                        fprintf(stderr, "[ERROR COMPILADOR] Variable '%s' no declarada\n", v2);
+                        exit(1);
+                    }
+                    
+                    if (r1 != dest_reg) {
+                        emit("MOVER R%d, R%d", dest_reg, r1);
+                    }
+                    emit("RESTAR R%d, R%d  ; %s = %s - %s", dest_reg, r2, var_name, v1, v2);
                 }
-                emit("RESTAR R%d, R%d  ; %s = %s - %s", dest_reg, r2, var_name, v1, v2);
             }
             
         } else {
@@ -290,11 +324,24 @@ static void compile_assignment(Compiler *c, const char *line) {
 static void compile_if(Compiler *c, const char *line) {
     // if/si (x == y) { o if/si (x != y) {
     char var1[64], op[4], var2[64];
+    char temp_line[512];
     
-    // Intentar parsear con 'if' o 'si'
-    int parsed = sscanf(line, "if ( %s %s %[^)]", var1, op, var2);
+    // Remover el { al final si existe
+    strncpy(temp_line, line, 511);
+    temp_line[511] = '\0';
+    char *brace = strchr(temp_line, '{');
+    if (brace) *brace = '\0';
+    
+    // Intentar parsear con 'if' o 'si' (con o sin espacio antes del paréntesis)
+    int parsed = sscanf(temp_line, "if ( %s %s %[^)]", var1, op, var2);
     if (parsed != 3) {
-        parsed = sscanf(line, "si ( %s %s %[^)]", var1, op, var2);
+        parsed = sscanf(temp_line, "if( %s %s %[^)]", var1, op, var2);
+    }
+    if (parsed != 3) {
+        parsed = sscanf(temp_line, "si ( %s %s %[^)]", var1, op, var2);
+    }
+    if (parsed != 3) {
+        parsed = sscanf(temp_line, "si( %s %s %[^)]", var1, op, var2);
     }
     
     if (parsed == 3) {
@@ -303,28 +350,60 @@ static void compile_if(Compiler *c, const char *line) {
         char *operator = trim(op);
         
         int r1 = find_variable(c, v1);
-        int r2 = find_variable(c, v2);
+        int r2;
         
-        if (r1 < 0 || r2 < 0) {
-            fprintf(stderr, "[ERROR COMPILADOR] Variable no declarada en if\n");
+        if (r1 < 0) {
+            fprintf(stderr, "[ERROR COMPILADOR] Variable '%s' no declarada en if\n", v1);
             exit(1);
+        }
+        
+        // v2 puede ser literal o variable
+        if (is_number(v2)) {
+            r2 = -1;  // Es un literal
+        } else {
+            r2 = find_variable(c, v2);
+            if (r2 < 0) {
+                fprintf(stderr, "[ERROR COMPILADOR] Variable '%s' no declarada en if\n", v2);
+                exit(1);
+            }
         }
         
         int label = get_next_label(c);
         
         emit("; if (%s %s %s)", v1, operator, v2);
-        emit("MOVER R15, R%d  ; Copiar %s", r1, v1);
-        emit("RESTAR R15, R%d  ; R15 = %s - %s", r2, v1, v2);
         
+        // Realizar la comparación
+        // Estrategia: copiar v1 a R15, luego restar v2
+        // Esto funciona tanto si v2 es variable o literal
+        emit("MOVER R15, R%d  ; R15 = %s", r1, v1);
+        if (r2 >= 0) {
+            // v2 es variable
+            emit("RESTAR R15, R%d  ; R15 = %s - %s", r2, v1, v2);
+        } else {
+            // v2 es literal
+            // Problema: RESTAR solo acepta registro como operando
+            // Necesitamos cargar el literal en un registro temporal primero
+            // Usamos R12 como registro temporal (asumiendo que no se usa para variables)
+            emit("MOVI R12, %s  ; temp = %s (literal)", v2, v2);
+            emit("RESTAR R15, R12  ; R15 = %s - %s", v1, v2);
+        }
+        
+        // Generar salto condicional
+        // En if: ejecutamos el bloque SI la condición es VERDADERA
+        // Entonces saltamos al endif SI la condición es FALSA
         if (strcmp(operator, "==") == 0) {
-            // Saltar si NO es cero (es decir, no son iguales)
+            // Saltar si NO son iguales (R15 != 0)
             emit("SNZ R15, endif_%d  ; Saltar si %s != %s", label, v1, v2);
         } else if (strcmp(operator, "!=") == 0) {
-            // Saltar si ES cero (es decir, son iguales)
+            // Saltar si SON iguales (R15 == 0)
             emit("SZ R15, endif_%d  ; Saltar si %s == %s", label, v1, v2);
+        } else {
+            fprintf(stderr, "[WARNING] Operador '%s' en if no totalmente soportado, use == o !=\n", operator);
+            emit("SNZ R15, endif_%d  ; Saltar (operador %s)", label, operator);
         }
         
         c->indent_level++;
+        c->block_stack[c->block_stack_top++] = BLOCK_IF;
     }
 }
 
@@ -365,25 +444,36 @@ static void compile_while(Compiler *c, const char *line) {
         
         emit("while_%d:  ; while (%s %s %s)", label, v1, operator, v2);
         
+        // Comparar v1 con v2
+        emit("MOVER R15, R%d  ; R15 = %s", r1, v1);
         if (r2 >= 0) {
-            emit("MOVER R15, R%d  ; Copiar %s", r1, v1);
+            // v2 es variable
             emit("RESTAR R15, R%d  ; R15 = %s - %s", r2, v1, v2);
         } else {
-            // Comparar con literal
-            emit("MOVI R15, %s", v2);
-            emit("RESTAR R15, R%d  ; R15 = %s - %s", r1, v2, v1);
-            emit("NO R15  ; Invertir para obtener %s - %s", v1, v2);
-            emit("MOVI R14, 1");
-            emit("SUMAR R15, R14");
+            // v2 es literal
+            emit("MOVI R12, %s  ; temp = %s (literal)", v2, v2);
+            emit("RESTAR R15, R12  ; R15 = %s - %s", v1, v2);
         }
         
+        // Generar salto condicional según el operador
+        // La condición es: mientras (condición) sea verdadera, ejecutar el bucle
+        // Entonces saltamos a endwhile cuando la condición sea FALSA
+        // Nota: Solo SZ y SNZ están implementadas actualmente
         if (strcmp(operator, "!=") == 0) {
+            // Salir si son iguales (R15 == 0)
             emit("SZ R15, endwhile_%d  ; Saltar si %s == %s", label, v1, v2);
         } else if (strcmp(operator, "==") == 0) {
+            // Salir si NO son iguales (R15 != 0)
             emit("SNZ R15, endwhile_%d  ; Saltar si %s != %s", label, v1, v2);
+        } else {
+            // Para <, >, <=, >= necesitamos emular con SZ/SNZ
+            // Por ahora, solo soportamos == y !=
+            fprintf(stderr, "[WARNING] Operador '%s' no totalmente soportado en while, use == o !=\n", operator);
+            emit("SNZ R15, endwhile_%d  ; Saltar (operador %s no implementado)", label, operator);
         }
         
         c->indent_level++;
+        c->block_stack[c->block_stack_top++] = BLOCK_WHILE;
     }
 }
 
@@ -396,15 +486,38 @@ static void compile_closing_brace(Compiler *c) {
             c->indent_level--;
             emit("; Fin de función");
             if (!c->function_has_explicit_return) {
-                emit("RETORNAR  ; Return implícito");
+                // main no debe usar RETORNAR (es llamada con SALTAR, no LLAMAR)
+                // Simplemente caer al ALTO
+                if (strcmp(c->current_function->name, "main") == 0) {
+                    emit("; Return implícito de main (cae al ALTO)");
+                } else {
+                    emit("RETORNAR  ; Return implícito");
+                }
             }
             c->current_function = NULL;
             c->function_has_explicit_return = false;
         } else {
-            // Es un while/for/if
+            // Es un bloque (if/while/for)
             c->indent_level--;
-            emit("SALTAR while_%d", label);
-            emit("endwhile_%d:", label);
+            
+            // Pop del stack para obtener tipo de bloque
+            BlockType block_type = BLOCK_NONE;
+            if (c->block_stack_top > 0) {
+                block_type = c->block_stack[--c->block_stack_top];
+            }
+            
+            if (block_type == BLOCK_IF) {
+                // Solo generar la etiqueta endif
+                emit("endif_%d:", label);
+            } else if (block_type == BLOCK_WHILE) {
+                // Generar salto de regreso y etiqueta de fin
+                emit("SALTAR while_%d", label);
+                emit("endwhile_%d:", label);
+            } else if (block_type == BLOCK_FOR) {
+                // Similar a while
+                emit("SALTAR for_%d", label);
+                emit("endfor_%d:", label);
+            }
         }
     }
 }
@@ -504,7 +617,14 @@ static void compile_return(Compiler *c, const char *line) {
             }
         }
         
-        emit("RETORNAR");
+        // Si estamos en main, no usar RETORNAR
+        // (main es llamada con SALTAR, no LLAMAR, así que no hay dirección de retorno)
+        // Simplemente caer al ALTO que está después de main
+        if (c->current_function && strcmp(c->current_function->name, "main") == 0) {
+            emit("; main cae al ALTO sin RETORNAR");
+        } else {
+            emit("RETORNAR");
+        }
         c->function_has_explicit_return = true;
     } else {
         // return sin valor
@@ -717,6 +837,18 @@ void compile_c_to_asm(const char *input_file, const char *output_file) {
         } else if (strncmp(trimmed, "return", 6) == 0 || strncmp(trimmed, "retornar", 8) == 0) {
             compile_return(&compiler, trimmed);
             
+        // Condicional if/si - DEBE IR ANTES DE LLAMADAS A FUNCIONES
+        } else if ((strncmp(trimmed, "if ", 3) == 0 || strncmp(trimmed, "if(", 3) == 0 ||
+                    strncmp(trimmed, "si ", 3) == 0 || strncmp(trimmed, "si(", 3) == 0) &&
+                   strchr(trimmed, '(') && strchr(trimmed, ')')) {
+            compile_if(&compiler, trimmed);
+            
+        // Bucle while/mientras - DEBE IR ANTES DE LLAMADAS A FUNCIONES
+        } else if ((strncmp(trimmed, "while ", 6) == 0 || strncmp(trimmed, "while(", 6) == 0 ||
+                    strncmp(trimmed, "mientras ", 9) == 0 || strncmp(trimmed, "mientras(", 9) == 0) &&
+                   strchr(trimmed, '(') && strchr(trimmed, ')')) {
+            compile_while(&compiler, trimmed);
+            
         // Llamadas a funciones: x = func(...);
         } else if (strchr(trimmed, '=') && strchr(trimmed, '(') && strchr(trimmed, ')')) {
             char lhs[128], rhs[256];
@@ -728,14 +860,6 @@ void compile_c_to_asm(const char *input_file, const char *output_file) {
         } else if (strchr(trimmed, '=') && strchr(trimmed, ';')) {
             compile_assignment(&compiler, trimmed);
             
-        // Condicional if/si
-        } else if (strncmp(trimmed, "if ", 3) == 0 || strncmp(trimmed, "si ", 3) == 0) {
-            compile_if(&compiler, trimmed);
-            
-        // Bucle while/mientras
-        } else if (strncmp(trimmed, "while ", 6) == 0 || strncmp(trimmed, "mientras ", 9) == 0) {
-            compile_while(&compiler, trimmed);
-            
         // Bucle for/para
         } else if (strncmp(trimmed, "for ", 4) == 0 || strncmp(trimmed, "para ", 5) == 0) {
             compile_for(&compiler, trimmed);
@@ -746,7 +870,6 @@ void compile_c_to_asm(const char *input_file, const char *output_file) {
         }
     }
     
-    emit("");
     emit("ALTO  ; Fin del programa");
     
     fclose(in);

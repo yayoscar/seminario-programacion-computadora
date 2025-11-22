@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de CPU - Pipeline Completo C→Máquina</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+        }
+        
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        /* Section */
+        .section {
+            min-height: 100vh;
+            padding: 80px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .section:nth-child(even) {
+            background: #1e293b;
+        }
+        
+        .section:nth-child(odd) {
+            background: #0f172a;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-week1 { background: #991b1b; color: white; }
+        .badge-week2 { background: #1e40af; color: white; }
+        .badge-week3 { background: #166534; color: white; }
+        .badge-week4 { background: #6b21a8; color: white; }
+        .badge-plus { background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; }
+        
+        /* Code Block */
+        pre {
+            background: #1e293b !important;
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+        
+        /* Progress indicator */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 1000;
+            transition: width 0.1s ease;
+        }
+        
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px;
+            border-radius: 50px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(148, 163, 184, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-dot.active {
+            background: #667eea;
+            transform: scale(1.3);
+        }
+        
+        /* Timeline */
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 4px solid #0f172a;
+        }
+        
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 20px;
+            width: 2px;
+            height: calc(100% + 30px);
+            background: rgba(102, 126, 234, 0.3);
+        }
+        
+        .timeline-item:last-child::after {
+            display: none;
+        }
+        
+        /* Stats */
+        .stat-box {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Highlight box */
+        .highlight-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .success-box {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .warning-box {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 4px solid #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <!-- Navigation Dots -->
+    <div class="nav" id="navDots"></div>
+    
+    <!-- HERO SECTION -->
+    <section class="hero" id="hero">
+        <div class="container text-center relative z-10">
+            <div class="fade-in">
+                <h1 class="text-6xl md:text-7xl font-bold mb-6">
+                    Simulador de CPU
+                </h1>
+                <h2 class="text-3xl md:text-4xl mb-8 text-white/90">
+                    Pipeline Completo: C → Ensamblador → Máquina
+                </h2>
+                <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl mb-8 inline-block">
+                    <p class="text-xl font-semibold mb-3">Seminario de Programación de Computadoras</p>
+                    <p class="text-lg">Doctorado en Sistemas Computacionales</p>
+                    <p class="text-lg mb-4">Universidad del Sur</p>
+                    <div class="text-base space-y-1">
+                        <p>M.C.C. Aarón Antero Borboa Jaimes</p>
+                        <p>M. En I. Angel Manuel Mex Alvarez</p>
+                        <p>M.T.I. Oscar Pérez Olan</p>
+                    </div>
+                </div>
+                <p class="text-lg">18 de noviembre de 2025</p>
+                <div class="mt-8">
+                    <i class="fas fa-chevron-down text-3xl animate-bounce"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OVERVIEW SECTION -->
+    <section class="section" id="overview">
+        <div class="container">
+            <div class="fade-in">
+                <h2 class="text-5xl font-bold mb-12 text-center">
+                    <i class="fas fa-map text-purple-500"></i> Visión General del Proyecto
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div class="card slide-in-left">
+                        <span class="badge badge-week1">Semana 1</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-3">Arquitectura de Computadoras</h3>
+                        <ul class="space-y-2 text-slate-300">
+                            <li><i class="fas fa-check text-green-500"></i> Modelo Von Neumann</li>
+                            <li><i class="fas fa-check text-green-500"></i> CPU Simulada</li>
+                            <li><i class="fas fa-check text-green-500"></i> Memoria y Registros</li>
+                            <li><i class="fas fa-check text-green-500"></i> Ciclo Fetch-Decode-Execute</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card slide-in-right">
+                        <span class="badge badge-week2">Semana 2</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-3">Lenguaje Ensamblador</h3>
+                        <ul class="space-y-2 text-slate-300">
+                            <li><i class="fas fa-check text-green-500"></i> ISA de 16 bits en Español</li>
+                            <li><i class="fas fa-check text-green-500"></i> Ensamblador 2 pasadas</li>
+                            <li><i class="fas fa-check text-green-500"></i> Pseudo-instrucciones</li>
+                            <li><i class="fas fa-check text-green-500"></i> 16 instrucciones básicas</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card slide-in-left">
+                        <span class="badge badge-week3">Semana 3</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-3">Lenguajes de Alto Nivel</h3>
+                        <ul class="space-y-2 text-slate-300">
+                            <li><i class="fas fa-check text-green-500"></i> Compilador C → ASM</li>
+                            <li><i class="fas fa-check text-green-500"></i> Estructuras de control</li>
+                            <li><i class="fas fa-check text-green-500"></i> Funciones y llamadas</li>
+                            <li><i class="fas fa-check text-green-500"></i> Gestión de stack</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card slide-in-right">
+                        <span class="badge badge-week4">Semana 4</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-3">Integración y Validación</h3>
+                        <ul class="space-y-2 text-slate-300">
+                            <li><i class="fas fa-check text-green-500"></i> Pipeline completo integrado</li>
+                            <li><i class="fas fa-check text-green-500"></i> Recursión funcional</li>
+                            <li><i class="fas fa-check text-green-500"></i> Suite de pruebas</li>
+                            <li><i class="fas fa-check text-green-500"></i> Documentación completa</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card card-gradient">
+                    <span class="badge badge-plus"><i class="fas fa-star"></i> PLUS</span>
+                    <h3 class="text-2xl font-bold mt-4 mb-3">Compilador Bilingüe</h3>
+                    <p class="text-slate-300">
+                        Soporte completo para sintaxis en <strong>español</strong>: 
+                        <code class="text-purple-400">entero</code>, 
+                        <code class="text-purple-400">si</code>, 
+                        <code class="text-purple-400">mientras</code>, 
+                        <code class="text-purple-400">para</code>, 
+                        <code class="text-purple-400">retornar</code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS SECTION -->
+    <section class="section" id="stats">
+        <div class="container">
+            <div class="fade-in text-center">
+                <h2 class="text-5xl font-bold mb-16">
+                    <i class="fas fa-chart-line text-purple-500"></i> Estadísticas del Proyecto
+                </h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="card stat-box">
+                        <div class="stat-number">16</div>
+                        <p class="text-slate-400 mt-2">Instrucciones ISA</p>
+                    </div>
+                    
+                    <div class="card stat-box">
+                        <div class="stat-number">18</div>
+                        <p class="text-slate-400 mt-2">Tests Validados</p>
+                    </div>
+                    
+                    <div class="card stat-box">
+                        <div class="stat-number">5</div>
+                        <p class="text-slate-400 mt-2">Palabras en Español</p>
+                    </div>
+                    
+                    <div class="card stat-box">
+                        <div class="stat-number">~105</div>
+                        <p class="text-slate-400 mt-2">Horas Invertidas</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-3">Simulador de CPU</h4>
+                        <p class="text-3xl font-bold text-purple-400">✓</p>
+                        <p class="text-slate-400">cpu_simulator.c</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-3">Ensamblador 2 Pasadas</h4>
+                        <p class="text-3xl font-bold text-blue-400">✓</p>
+                        <p class="text-slate-400">assembler.c</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-3">Compilador Bilingüe</h4>
+                        <p class="text-3xl font-bold text-green-400">✓</p>
+                        <p class="text-slate-400">c_to_asm.c</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEMANA 1 -->
+    <section class="section" id="week1">
+        <div class="container">
+            <div class="fade-in">
+                <span class="badge badge-week1 text-lg">Semana 1</span>
+                <h2 class="text-5xl font-bold mt-4 mb-8">Arquitectura de Computadoras</h2>
+                
+                <div class="highlight-box mb-8">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <i class="fas fa-microchip text-blue-400"></i> Modelo Von Neumann
+                    </h3>
+                    <p class="text-lg text-slate-300">
+                        Arquitectura donde programa y datos residen en la <strong>misma memoria</strong>. 
+                        Implementa el ciclo fundamental: <strong>Fetch → Decode → Execute → Write-back</strong>
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4"><i class="fas fa-memory text-purple-400"></i> Componentes</h4>
+                        <ul class="space-y-3 text-slate-300">
+                            <li><strong>CPU:</strong> ALU + Unidad de Control</li>
+                            <li><strong>Memoria:</strong> 256 palabras de 16 bits</li>
+                            <li><strong>Registros:</strong> 16 registros (R0-R15)</li>
+                            <li><strong>I/O:</strong> Entrada/Salida básica</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4"><i class="fas fa-cogs text-blue-400"></i> Ciclo de Ejecución</h4>
+                        <div class="timeline-item">
+                            <h5 class="font-bold">FETCH</h5>
+                            <p class="text-slate-400">Leer instrucción de memoria[PC]</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h5 class="font-bold">DECODE</h5>
+                            <p class="text-slate-400">Interpretar opcode y operandos</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h5 class="font-bold">EXECUTE</h5>
+                            <p class="text-slate-400">Ejecutar en ALU/UC</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h5 class="font-bold">WRITE-BACK</h5>
+                            <p class="text-slate-400">Guardar resultado</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h4 class="text-xl font-bold mb-4">Implementación en C</h4>
+                    <pre><code class="language-c">typedef struct {
+    uint16_t memory[MEMORY_SIZE];  // 256 palabras
+    uint16_t registers[NUM_REGISTERS];  // R0-R15
+    uint16_t pc;                   // Program Counter
+    uint16_t ir;                   // Instruction Register
+    bool halted;
+    uint32_t cycle_count;
+} CPU;
+
+void cpu_cycle(CPU *cpu) {
+    // FETCH
+    cpu->ir = cpu->memory[cpu->pc];
+    
+    // DECODE
+    uint8_t opcode = (cpu->ir >> 12) & 0xF;
+    uint8_t rd = (cpu->ir >> 8) & 0xF;
+    uint8_t operand = cpu->ir & 0xFF;
+    
+    // EXECUTE
+    switch(opcode) {
+        case OP_MOVI:  // R[rd] = operand
+            cpu->registers[rd] = operand;
+            break;
+        case OP_SUMAR: // R[rd] += R[operand]
+            cpu->registers[rd] += cpu->registers[operand];
+            break;
+        // ... más instrucciones
+    }
+    
+    cpu->pc++;
+    cpu->cycle_count++;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEMANA 2 -->
+    <section class="section" id="week2">
+        <div class="container">
+            <div class="fade-in">
+                <span class="badge badge-week2 text-lg">Semana 2</span>
+                <h2 class="text-5xl font-bold mt-4 mb-8">Lenguaje Ensamblador</h2>
+                
+                <div class="highlight-box mb-8">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <i class="fas fa-code text-blue-400"></i> ISA de 16 bits en Español
+                    </h3>
+                    <p class="text-lg text-slate-300">
+                        Conjunto de instrucciones con <strong>mnemónicos en español</strong> para facilitar el aprendizaje.
+                        Formato: <code class="text-purple-400">[4 bits OP][4 bits Rd][8 bits Operando]</code>
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Instrucciones Básicas</h4>
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-700">
+                                    <th class="text-left p-2">Código</th>
+                                    <th class="text-left p-2">Mnemónico</th>
+                                    <th class="text-left p-2">Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300">
+                                <tr><td class="p-2">0x1</td><td class="p-2">MOVI</td><td class="p-2">Mover inmediato</td></tr>
+                                <tr><td class="p-2">0x2</td><td class="p-2">MOVER</td><td class="p-2">Mover entre registros</td></tr>
+                                <tr><td class="p-2">0x3</td><td class="p-2">SUMAR</td><td class="p-2">Suma</td></tr>
+                                <tr><td class="p-2">0x4</td><td class="p-2">RESTAR</td><td class="p-2">Resta</td></tr>
+                                <tr><td class="p-2">0x8</td><td class="p-2">CARGAR</td><td class="p-2">Load desde memoria</td></tr>
+                                <tr><td class="p-2">0x9</td><td class="p-2">GUARDAR</td><td class="p-2">Store en memoria</td></tr>
+                                <tr><td class="p-2">0xA</td><td class="p-2">SALTAR</td><td class="p-2">Jump incondicional</td></tr>
+                                <tr><td class="p-2">0xF</td><td class="p-2">ALTO</td><td class="p-2">Halt</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Pseudo-instrucciones</h4>
+                        <div class="space-y-4">
+                            <div class="success-box">
+                                <h5 class="font-bold mb-2">LLAMAR dirección</h5>
+                                <p class="text-sm text-slate-400">Expandida a 5 instrucciones para llamada a función</p>
+                            </div>
+                            <div class="success-box">
+                                <h5 class="font-bold mb-2">RETORNAR</h5>
+                                <p class="text-sm text-slate-400">Expandida a 4 instrucciones para retorno</p>
+                            </div>
+                            <div class="success-box">
+                                <h5 class="font-bold mb-2">EMPUJAR Rd</h5>
+                                <p class="text-sm text-slate-400">Expandida a 3 instrucciones (push)</p>
+                            </div>
+                            <div class="success-box">
+                                <h5 class="font-bold mb-2">SACAR Rd</h5>
+                                <p class="text-sm text-slate-400">Expandida a 3 instrucciones (pop)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h4 class="text-xl font-bold mb-4">Ejemplo de Programa en Ensamblador</h4>
+                    <pre><code class="language-asm">; Programa: Suma 1 + 2 + 3 + 4 + 5
+        MOVI R0, 0      ; R0 = acumulador = 0
+        MOVI R1, 1      ; R1 = contador = 1
+        MOVI R2, 5      ; R2 = límite = 5
+        
+bucle:  SUMAR R0, R1    ; R0 = R0 + R1
+        MOVI R15, 1     ; R15 = 1
+        SUMAR R1, R15   ; R1 = R1 + 1
+        
+        MOVER R15, R1   ; R15 = R1
+        RESTAR R15, R2  ; R15 = R1 - R2
+        SNZ R15, bucle  ; Si R15 != 0, saltar a bucle
+        
+        ESCRIBIR R0     ; Mostrar resultado
+        ALTO            ; Fin</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEMANA 3 -->
+    <section class="section" id="week3">
+        <div class="container">
+            <div class="fade-in">
+                <span class="badge badge-week3 text-lg">Semana 3</span>
+                <h2 class="text-5xl font-bold mt-4 mb-8">Lenguajes de Alto Nivel</h2>
+                
+                <div class="highlight-box mb-8">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <i class="fas fa-terminal text-green-400"></i> Compilador C → Ensamblador
+                    </h3>
+                    <p class="text-lg text-slate-300">
+                        Compilador que traduce un <strong>subconjunto de C</strong> a nuestro lenguaje ensamblador.
+                        Soporta funciones, variables locales, estructuras de control y recursión.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card slide-in-left">
+                        <h4 class="text-xl font-bold mb-4">Características Soportadas</h4>
+                        <ul class="space-y-2 text-slate-300">
+                            <li><i class="fas fa-check text-green-500"></i> Declaraciones <code>int</code></li>
+                            <li><i class="fas fa-check text-green-500"></i> Operaciones aritméticas <code>+ - * /</code></li>
+                            <li><i class="fas fa-check text-green-500"></i> Estructuras <code>if</code> / <code>else</code></li>
+                            <li><i class="fas fa-check text-green-500"></i> Bucles <code>while</code> y <code>for</code></li>
+                            <li><i class="fas fa-check text-green-500"></i> Funciones y <code>return</code></li>
+                            <li><i class="fas fa-check text-green-500"></i> Recursión</li>
+                            <li><i class="fas fa-check text-green-500"></i> Gestión automática de stack</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card slide-in-right">
+                        <h4 class="text-xl font-bold mb-4">Pipeline de Compilación</h4>
+                        <div class="space-y-4">
+                            <div class="bg-blue-900/30 p-4 rounded-lg">
+                                <h5 class="font-bold mb-2">1. Parsing</h5>
+                                <p class="text-sm text-slate-400">Análisis léxico y sintáctico del código C</p>
+                            </div>
+                            <div class="bg-purple-900/30 p-4 rounded-lg">
+                                <h5 class="font-bold mb-2">2. Generación de ASM</h5>
+                                <p class="text-sm text-slate-400">Traducción a lenguaje ensamblador</p>
+                            </div>
+                            <div class="bg-green-900/30 p-4 rounded-lg">
+                                <h5 class="font-bold mb-2">3. Ensamblado</h5>
+                                <p class="text-sm text-slate-400">Conversión a código máquina (binario)</p>
+                            </div>
+                            <div class="bg-red-900/30 p-4 rounded-lg">
+                                <h5 class="font-bold mb-2">4. Ejecución</h5>
+                                <p class="text-sm text-slate-400">Simulación en CPU virtual</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Código C de Entrada</h4>
+                        <pre><code class="language-c">int factorial(int n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+int main() {
+    int resultado = factorial(5);
+    return resultado;
+}</code></pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Ensamblador Generado</h4>
+                        <pre><code class="language-asm">factorial:
+    EMPUJAR R14
+    MOVI R1, 1
+    SALTC R0, mas_de_1
+    MOVI R0, 1
+    RETORNAR
+mas_de_1:
+    MOVER R14, R0
+    MOVI R1, 1
+    RESTAR R0, R1
+    LLAMAR factorial
+    MULTIPLICAR R0, R14
+    RETORNAR
+
+main:
+    MOVI R0, 5
+    LLAMAR factorial
+    RETORNAR</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEMANA 4 -->
+    <section class="section" id="week4">
+        <div class="container">
+            <div class="fade-in">
+                <span class="badge badge-week4 text-lg">Semana 4</span>
+                <h2 class="text-5xl font-bold mt-4 mb-8">Integración y Validación</h2>
+                
+                <div class="highlight-box success-box mb-8">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <i class="fas fa-check-circle text-green-400"></i> Pipeline Completo Funcional
+                    </h3>
+                    <p class="text-lg text-slate-300">
+                        El sistema completo está integrado y validado. Se puede escribir código en C,
+                        compilarlo a ensamblador, ensamblarlo a binario y ejecutarlo en la CPU simulada.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="card text-center">
+                        <div class="text-5xl mb-4">📝</div>
+                        <h4 class="text-xl font-bold mb-2">Compilador C→ASM</h4>
+                        <p class="text-slate-400">c_to_asm.c</p>
+                        <p class="text-sm text-slate-300 mt-3">Traduce C a ensamblador con soporte bilingüe</p>
+                    </div>
+                    
+                    <div class="card text-center">
+                        <div class="text-5xl mb-4">⚙️</div>
+                        <h4 class="text-xl font-bold mb-2">Ensamblador</h4>
+                        <p class="text-slate-400">assembler.c</p>
+                        <p class="text-sm text-slate-300 mt-3">2 pasadas con expansión de pseudo-instrucciones</p>
+                    </div>
+                    
+                    <div class="card text-center">
+                        <div class="text-5xl mb-4">🖥️</div>
+                        <h4 class="text-xl font-bold mb-2">Simulador CPU</h4>
+                        <p class="text-slate-400">cpu_simulator.c</p>
+                        <p class="text-sm text-slate-300 mt-3">Ejecuta ciclo fetch-decode-execute</p>
+                    </div>
+                </div>
+                
+                <div class="card mb-8">
+                    <h4 class="text-xl font-bold mb-4">
+                        <i class="fas fa-vial text-purple-400"></i> Suite de Pruebas
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h5 class="font-bold mb-3 text-blue-400">Tests en C (Inglés) - 10</h5>
+                            <ul class="space-y-2 text-sm text-slate-300">
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_simple.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_simple_func.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_function.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_if.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_while.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_for.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_factorial.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_fibonacci.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_factorial_iter.c</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_c_fibonacci_iter.c</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h5 class="font-bold mb-3 text-purple-400">Tests en CES (Español) - 8</h5>
+                            <ul class="space-y-2 text-sm text-slate-300">
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_main_only.c (77 ciclos)</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_simple_func.c (161 ciclos)</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_function.c (137 ciclos)</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_if.c (65 ciclos)</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_while.c (53 ciclos)</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_for.c (53 ciclos)</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_factorial.c (137 ciclos)</li>
+                                <li><i class="fas fa-check-circle text-green-500"></i> test_ces_fibonacci.c (137 ciclos)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h4 class="text-xl font-bold mb-4">Ejemplo de Ejecución Completa</h4>
+                    <pre><code class="language-bash"># 1. Compilar C a Ensamblador
+./bin/c_to_asm tests/test_ces_factorial.c tests/test_ces_factorial.asm
+
+# 2. Ensamblar a Binario
+./bin/assembler tests/test_ces_factorial.asm tests/test_ces_factorial.mem
+
+# 3. Ejecutar en CPU
+./bin/main tests/test_ces_factorial.mem
+
+# Salida:
+# PC:012  R0:120  R1:001  ...  HALT
+# Execution finished: 137 cycles</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BILINGUAL PLUS -->
+    <section class="section" id="bilingual">
+        <div class="container">
+            <div class="fade-in">
+                <span class="badge badge-plus text-lg"><i class="fas fa-star"></i> DIFERENCIADOR</span>
+                <h2 class="text-5xl font-bold mt-4 mb-8">Compilador Bilingüe</h2>
+                
+                <div class="card card-gradient mb-8">
+                    <h3 class="text-3xl font-bold mb-4">
+                        <i class="fas fa-language text-yellow-400"></i> Soporte para Español
+                    </h3>
+                    <p class="text-xl text-slate-200 leading-relaxed">
+                        Nuestro compilador es <strong>único</strong>: acepta sintaxis tanto en <strong>inglés</strong> como en <strong>español</strong>.
+                        Los estudiantes pueden programar con palabras clave familiares en su idioma nativo.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card slide-in-left">
+                        <h4 class="text-2xl font-bold mb-4 text-blue-400">
+                            <i class="fas fa-flag-usa"></i> Sintaxis en Inglés
+                        </h4>
+                        <pre><code class="language-c">int factorial(int n) {
+    if (n <= 1) {
+        return 1;
+    }
+    int temp = n - 1;
+    int result = factorial(temp);
+    return n * result;
+}
+
+int main() {
+    int x = 5;
+    int resultado = factorial(x);
+    return resultado;
+}</code></pre>
+                    </div>
+                    
+                    <div class="card slide-in-right">
+                        <h4 class="text-2xl font-bold mb-4 text-purple-400">
+                            <i class="fas fa-flag"></i> Sintaxis en Español
+                        </h4>
+                        <pre><code class="language-c">entero factorial(entero n) {
+    si (n <= 1) {
+        retornar 1;
+    }
+    entero temp = n - 1;
+    entero result = factorial(temp);
+    retornar n * result;
+}
+
+entero main() {
+    entero x = 5;
+    entero resultado = factorial(x);
+    retornar resultado;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="card mb-8">
+                    <h4 class="text-2xl font-bold mb-6 text-center">Mapeo de Palabras Clave</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gradient-to-r from-blue-900/50 to-purple-900/50 p-6 rounded-lg text-center">
+                            <div class="text-4xl mb-2">📦</div>
+                            <p class="text-xl font-mono text-blue-300">int</p>
+                            <div class="text-2xl my-2">↔️</div>
+                            <p class="text-xl font-mono text-purple-300">entero</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-green-900/50 to-teal-900/50 p-6 rounded-lg text-center">
+                            <div class="text-4xl mb-2">↩️</div>
+                            <p class="text-xl font-mono text-green-300">return</p>
+                            <div class="text-2xl my-2">↔️</div>
+                            <p class="text-xl font-mono text-teal-300">retornar</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-yellow-900/50 to-orange-900/50 p-6 rounded-lg text-center">
+                            <div class="text-4xl mb-2">❓</div>
+                            <p class="text-xl font-mono text-yellow-300">if</p>
+                            <div class="text-2xl my-2">↔️</div>
+                            <p class="text-xl font-mono text-orange-300">si</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-pink-900/50 to-red-900/50 p-6 rounded-lg text-center">
+                            <div class="text-4xl mb-2">🔁</div>
+                            <p class="text-xl font-mono text-pink-300">while</p>
+                            <div class="text-2xl my-2">↔️</div>
+                            <p class="text-xl font-mono text-red-300">mientras</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-indigo-900/50 to-violet-900/50 p-6 rounded-lg text-center">
+                            <div class="text-4xl mb-2">🔢</div>
+                            <p class="text-xl font-mono text-indigo-300">for</p>
+                            <div class="text-2xl my-2">↔️</div>
+                            <p class="text-xl font-mono text-violet-300">para</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Ventajas Pedagógicas</h4>
+                        <ul class="space-y-3 text-slate-300">
+                            <li><i class="fas fa-graduation-cap text-green-500"></i> Reducción de barrera lingüística</li>
+                            <li><i class="fas fa-brain text-purple-500"></i> Enfoque en conceptos, no en inglés</li>
+                            <li><i class="fas fa-users text-blue-500"></i> Inclusión de estudiantes hispanohablantes</li>
+                            <li><i class="fas fa-book text-yellow-500"></i> Aprendizaje más natural y fluido</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Implementación Técnica</h4>
+                        <pre><code class="language-c">// En c_to_asm.c
+if (strncmp(trimmed, "if ", 3) == 0 || 
+    strncmp(trimmed, "si ", 3) == 0) {
+    compile_if(line, output);
+}
+
+if (strncmp(trimmed, "while ", 6) == 0 || 
+    strncmp(trimmed, "mientras ", 9) == 0) {
+    compile_while(line, output);
+}
+
+if (strncmp(trimmed, "for ", 4) == 0 || 
+    strncmp(trimmed, "para ", 5) == 0) {
+    compile_for(line, output);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RETOS TECNICOS -->
+    <section class="section" id="challenges">
+        <div class="container">
+            <div class="fade-in">
+                <h2 class="text-5xl font-bold mb-8 text-center">
+                    <i class="fas fa-bug text-red-500"></i> Retos Técnicos y Soluciones
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card slide-in-left">
+                        <div class="bg-red-900/30 p-3 rounded-lg mb-4">
+                            <h4 class="text-xl font-bold text-red-400">🐛 Bug #1: strdup() Segfault</h4>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Problema:</h5>
+                            <p class="text-sm text-slate-400">Compilador crasheaba al procesar parámetros</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Causa:</h5>
+                            <p class="text-sm text-slate-400">strdup() no disponible en -std=c99</p>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-green-300 mb-2">Solución:</h5>
+                            <pre class="text-xs"><code class="language-c">char param[256];
+strncpy(param, token, 255);
+param[255] = '\0';</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="card slide-in-right">
+                        <div class="bg-red-900/30 p-3 rounded-lg mb-4">
+                            <h4 class="text-xl font-bold text-red-400">🐛 Bug #2: RETORNAR Duplicado</h4>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Problema:</h5>
+                            <p class="text-sm text-slate-400">Stack overflow por doble RETORNAR</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Causa:</h5>
+                            <p class="text-sm text-slate-400">Generado en return y en cierre de función</p>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-green-300 mb-2">Solución:</h5>
+                            <pre class="text-xs"><code class="language-c">typedef struct {
+    bool has_explicit_return;
+} Compiler;
+// Marcar flag en return
+// Verificar en cierre</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="card slide-in-left">
+                        <div class="bg-red-900/30 p-3 rounded-lg mb-4">
+                            <h4 class="text-xl font-bold text-red-400">🐛 Bug #3: LLAMAR No Expandida</h4>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Problema:</h5>
+                            <p class="text-sm text-slate-400">Llamadas a funciones no funcionaban</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Causa:</h5>
+                            <p class="text-sm text-slate-400">Case statement incompleto en expansión</p>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-green-300 mb-2">Solución:</h5>
+                            <p class="text-sm text-slate-400">Implementar case PSEUDO_CALL con resolución de etiquetas</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card slide-in-right">
+                        <div class="bg-red-900/30 p-3 rounded-lg mb-4">
+                            <h4 class="text-xl font-bold text-red-400">🐛 Bug #4: SALTAR Loop Infinito</h4>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Problema:</h5>
+                            <p class="text-sm text-slate-400">PC permanecía en 0x0000</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="font-bold text-slate-300 mb-2">Causa:</h5>
+                            <p class="text-sm text-slate-400">Confusión entre saltos directos e indirectos</p>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-green-300 mb-2">Solución:</h5>
+                            <pre class="text-xs"><code class="language-c">// Usar Rd para distinguir
+if (rd != 0) {
+    cpu->PC = cpu->R[rd]; // Indirecto
+} else {
+    cpu->PC = operand; // Directo
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card card-gradient">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <i class="fas fa-lightbulb text-yellow-400"></i> Lecciones Aprendidas
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-black/30 rounded-lg">
+                            <h4 class="font-bold mb-2 text-blue-400">1. Verificar disponibilidad de funciones</h4>
+                            <p class="text-sm text-slate-300">Según el estándar de C usado</p>
+                        </div>
+                        <div class="p-4 bg-black/30 rounded-lg">
+                            <h4 class="font-bold mb-2 text-purple-400">2. Mantener estado del compilador</h4>
+                            <p class="text-sm text-slate-300">Para evitar duplicación de código</p>
+                        </div>
+                        <div class="p-4 bg-black/30 rounded-lg">
+                            <h4 class="font-bold mb-2 text-green-400">3. Completar todas las ramas</h4>
+                            <p class="text-sm text-slate-300">Antes de testing de integración</p>
+                        </div>
+                        <div class="p-4 bg-black/30 rounded-lg">
+                            <h4 class="font-bold mb-2 text-yellow-400">4. Diseñar encoding cuidadosamente</h4>
+                            <p class="text-sm text-slate-300">Para evitar ambigüedades en instrucciones</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RECURSION DEMO -->
+    <section class="section" id="recursion">
+        <div class="container">
+            <div class="fade-in">
+                <h2 class="text-5xl font-bold mb-8 text-center">
+                    <i class="fas fa-infinity text-purple-500"></i> Recursión en Acción
+                </h2>
+                
+                <div class="highlight-box warning-box mb-8">
+                    <h3 class="text-2xl font-bold mb-4">Validación de Recursión</h3>
+                    <p class="text-lg">
+                        El simulador soporta <strong>recursión completa</strong> mediante gestión automática del stack.
+                        Las pseudo-instrucciones LLAMAR/RETORNAR manejan el guardado/restauración del contexto.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Fibonacci Recursivo</h4>
+                        <pre><code class="language-c">entero fibonacci(entero n) {
+    si (n <= 1) {
+        retornar n;
+    }
+    entero a = fibonacci(n - 1);
+    entero b = fibonacci(n - 2);
+    retornar a + b;
+}
+
+entero main() {
+    entero resultado = fibonacci(6);
+    retornar resultado;
+}</code></pre>
+                        <div class="mt-4 p-4 bg-green-900/30 rounded">
+                            <p class="text-sm"><strong>Resultado:</strong> 8</p>
+                            <p class="text-sm text-slate-400">Ejecutado en 137 ciclos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-4">Gestión del Stack</h4>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-blue-900/30 rounded">
+                                <h5 class="font-bold mb-2">LLAMAR (Call)</h5>
+                                <ol class="text-sm text-slate-300 list-decimal list-inside">
+                                    <li>Guardar R0-R3 en stack</li>
+                                    <li>Guardar dirección de retorno</li>
+                                    <li>Saltar a función</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="p-3 bg-purple-900/30 rounded">
+                                <h5 class="font-bold mb-2">RETORNAR (Return)</h5>
+                                <ol class="text-sm text-slate-300 list-decimal list-inside">
+                                    <li>Recuperar dirección de retorno</li>
+                                    <li>Restaurar R1-R3</li>
+                                    <li>Saltar a dirección guardada</li>
+                                    <li>R0 contiene valor de retorno</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="p-3 bg-green-900/30 rounded">
+                                <h5 class="font-bold mb-2">Stack Pointer</h5>
+                                <p class="text-sm text-slate-300">
+                                    Base: 250 (crece hacia abajo)<br>
+                                    Gestión automática por compilador
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DOCUMENTATION -->
+    <section class="section" id="documentation">
+        <div class="container">
+            <div class="fade-in">
+                <h2 class="text-5xl font-bold mb-8 text-center">
+                    <i class="fas fa-book text-blue-500"></i> Documentación y Reflexiones
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="card text-center">
+                        <div class="text-5xl mb-4">📖</div>
+                        <h4 class="text-xl font-bold mb-3">README.md</h4>
+                        <p class="text-slate-400 mb-4">Guía de inicio rápido con instrucciones multiplataforma</p>
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            <li>Linux (Ubuntu/Debian/Fedora/Arch)</li>
+                            <li>macOS (Xcode/Homebrew)</li>
+                            <li>Windows (WSL/MinGW/MSYS2)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card text-center">
+                        <div class="text-5xl mb-4">📚</div>
+                        <h4 class="text-xl font-bold mb-3">MEMORIA_TECNICA.md</h4>
+                        <p class="text-slate-400 mb-4">Documentación técnica completa del proyecto</p>
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            <li>Arquitectura del sistema</li>
+                            <li>Diseño del ISA</li>
+                            <li>Compilador bilingüe</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card text-center">
+                        <div class="text-5xl mb-4">🔧</div>
+                        <h4 class="text-xl font-bold mb-3">ISA_REFERENCE.md</h4>
+                        <p class="text-slate-400 mb-4">Referencia completa del conjunto de instrucciones</p>
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            <li>16 instrucciones básicas</li>
+                            <li>4 pseudo-instrucciones</li>
+                            <li>Formatos y ejemplos</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card mb-8">
+                    <h4 class="text-xl font-bold mb-4">Ejemplo de Uso Rápido</h4>
+                    <pre><code class="language-bash"># Compilar el proyecto
+make clean && make
+
+# Ejecutar test en español
+./bin/c_to_asm tests/test_ces_factorial.c tests/test_ces_factorial.asm
+./bin/assembler tests/test_ces_factorial.asm tests/test_ces_factorial.mem
+./bin/main tests/test_ces_factorial.mem
+
+# Ejecutar todos los tests
+cd tests && bash run_tests.sh</code></pre>
+                </div>
+                
+                <div class="highlight-box mb-8">
+                    <h3 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-brain text-purple-400"></i> Aprendizajes Clave
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold text-blue-400 mb-3">Sobre Arquitectura</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><i class="fas fa-arrow-right text-blue-500"></i> Comprensión profunda del ciclo fetch-decode-execute</li>
+                                <li><i class="fas fa-arrow-right text-blue-500"></i> Trade-offs entre ISA simple vs compleja</li>
+                                <li><i class="fas fa-arrow-right text-blue-500"></i> Diseño de encoding sin ambigüedades</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-green-400 mb-3">Sobre Compilación</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><i class="fas fa-arrow-right text-green-500"></i> Compilación es descomposición sistemática</li>
+                                <li><i class="fas fa-arrow-right text-green-500"></i> Pseudo-instrucciones como abstracción poderosa</li>
+                                <li><i class="fas fa-arrow-right text-green-500"></i> Importancia de mantener estado del compilador</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-400 mb-3">Sobre Gestión de Stack</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><i class="fas fa-arrow-right text-purple-500"></i> Stack guarda contexto de funciones</li>
+                                <li><i class="fas fa-arrow-right text-purple-500"></i> LLAMAR: guardar registros y dirección retorno</li>
+                                <li><i class="fas fa-arrow-right text-purple-500"></i> RETORNAR: restaurar contexto y saltar</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-yellow-400 mb-3">Sobre Debugging</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><i class="fas fa-arrow-right text-yellow-500"></i> Dividir y conquistar: aislar componentes</li>
+                                <li><i class="fas fa-arrow-right text-yellow-500"></i> Crear tests mínimos reproducibles</li>
+                                <li><i class="fas fa-arrow-right text-yellow-500"></i> Verificar todas las asunciones</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card card-gradient">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <i class="fas fa-quote-left text-blue-400"></i> Reflexión sobre el Proceso
+                    </h3>
+                    <blockquote class="text-lg text-slate-200 italic leading-relaxed">
+                        "Las computadoras son comprensibles. No son cajas negras mágicas. Cada operación se puede descomponer y entender.
+                        El software y hardware están profundamente acoplados. La abstracción es poderosa: poder escribir <code class="text-purple-400">z = suma(5, 3)</code>
+                        en vez de 40+ instrucciones máquina es la diferencia entre que programar sea viable o no.
+                        Los bugs encontrados y corregidos enseñaron más que si todo hubiera funcionado a la primera."
+                    </blockquote>
+                    <p class="text-right mt-4 text-slate-400">— Memoria Técnica del Proyecto</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONCLUSIONS -->
+    <section class="section" id="conclusions">
+        <div class="container">
+            <div class="fade-in text-center">
+                <h2 class="text-5xl font-bold mb-8">
+                    <i class="fas fa-trophy text-yellow-500"></i> Conclusiones
+                </h2>
+                
+                <div class="card card-gradient mb-8 text-left">
+                    <h3 class="text-2xl font-bold mb-6">Logros del Proyecto</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold text-green-400 mb-3"><i class="fas fa-check-circle"></i> Técnicos</h4>
+                            <ul class="space-y-2 text-slate-300">
+                                <li>✅ Arquitectura Von Neumann completa</li>
+                                <li>✅ ISA de 16 bits en español</li>
+                                <li>✅ Compilador C funcional</li>
+                                <li>✅ Pipeline integrado C→ASM→BIN→CPU</li>
+                                <li>✅ Recursión validada</li>
+                                <li>✅ 18 tests pasando al 100%</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-400 mb-3"><i class="fas fa-star"></i> Innovadores</h4>
+                            <ul class="space-y-2 text-slate-300">
+                                <li>🌟 Compilador bilingüe único</li>
+                                <li>🌟 Mnemonicos en español</li>
+                                <li>🌟 Enfoque pedagógico inclusivo</li>
+                                <li>🌟 Documentación multiplataforma</li>
+                                <li>🌟 Suite de pruebas exhaustiva</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-3">Aprendizajes</h4>
+                        <p class="text-slate-300 text-sm">
+                            Comprensión profunda de la arquitectura de computadoras desde el nivel más bajo
+                            hasta lenguajes de alto nivel.
+                        </p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-3">Desafíos</h4>
+                        <p class="text-slate-300 text-sm">
+                            Integración del pipeline completo, gestión de memoria para recursión,
+                            y soporte bilingüe en el compilador.
+                        </p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="text-xl font-bold mb-3">Trabajo Futuro</h4>
+                        <p class="text-slate-300 text-sm">
+                            Expandir el ISA con más instrucciones, soportar arrays,
+                            y añadir un debugger interactivo.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="text-6xl mb-6">🎓</div>
+                <h3 class="text-3xl font-bold mb-4">Gracias por su Atención</h3>
+                <p class="text-xl text-slate-400">
+                    Universidad del Sur - Doctorado en Sistemas Computacionales
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        // Highlight.js initialization
+        hljs.highlightAll();
+        
+        // Progress bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        });
+        
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+        
+        // Observe all animated elements
+        document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
+            observer.observe(el);
+        });
+        
+        // Navigation dots
+        const sections = document.querySelectorAll('.section, .hero');
+        const navDots = document.getElementById('navDots');
+        
+        sections.forEach((section, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot';
+            dot.addEventListener('click', () => {
+                section.scrollIntoView({ behavior: 'smooth' });
+            });
+            navDots.appendChild(dot);
+        });
+        
+        // Update active dot on scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach((section, index) => {
+                const sectionTop = section.offsetTop;
+                if (window.pageYOffset >= sectionTop - 300) {
+                    current = index;
+                }
+            });
+            
+            document.querySelectorAll('.nav-dot').forEach((dot, index) => {
+                dot.classList.remove('active');
+                if (index === current) {
+                    dot.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

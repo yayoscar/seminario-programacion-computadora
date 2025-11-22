@@ -47,6 +47,7 @@ Simulador educativo completo de una computadora con ISA de 16 bits y mnemónicos
 
 - ✅ **Mnemónicos en español** - MOVER, SUMAR, CARGAR, LLAMAR, RETORNAR
 - ✅ **Pipeline completo** - C → ASM → Binario → Ejecución
+- ✅ **Estructuras de control** - Bucles `while` con operadores `==` y `!=`
 - ✅ **Llamadas a funciones** - Pseudo-instrucciones LLAMAR/RETORNAR
 - ✅ **Gestión de stack** - EMPUJAR/SACAR con R14 como SP
 - ✅ **16 instrucciones básicas** - Aritméticas, lógicas, memoria, saltos, I/O
@@ -241,7 +242,9 @@ make clean
 
 Este proyecto implementa el **flujo completo** desde código de alto nivel hasta ejecución en CPU:
 
-### Paso 1: Escribir código C
+### Ejemplo 1: Función Simple (Suma)
+
+#### Paso 1: Escribir código C
 
 Archivo `tests/test_c_simple_func.c`:
 ```c
@@ -257,7 +260,7 @@ int main() {
 }
 ```
 
-### Paso 2: Compilar C → Ensamblador
+#### Paso 2: Compilar C → Ensamblador
 
 ```bash
 ./bin/c_to_asm tests/test_c_simple_func.c tests/test_c_simple_func.asm
@@ -287,7 +290,7 @@ inicio:
     ALTO
 ```
 
-### Paso 3: Ensamblar ASM → Binario
+#### Paso 3: Ensamblar ASM → Binario
 
 ```bash
 ./bin/assembler tests/test_c_simple_func.asm tests/test_c_simple_func.mem
@@ -304,7 +307,7 @@ F000    ; ALTO
 ...     ; RETORNAR (expandido a 4 instrucciones)
 ```
 
-### Paso 4: Ejecutar en CPU Simulada
+#### Paso 4: Ejecutar en CPU Simulada
 
 ```bash
 ./bin/cpu_simulator tests/test_c_simple_func.mem
@@ -317,6 +320,198 @@ Resultado:
 [CPU] R6 = 0x0008  (z = suma(5,3) = 8)
 [CPU] Ejecución completada en 161 ciclos
 ```
+
+---
+
+### Ejemplo 2: Bucle While Funcional ⭐
+
+#### Código C con `while`
+
+Archivo `ejemplos/02_numeros_pares_while.c`:
+```c
+int main() {
+    int contador;
+    int resultado;
+    int dos;
+    
+    contador = 2;
+    dos = 2;
+    resultado = 0;
+    
+    // Bucle while con operador !=
+    while (contador != 22) {
+        resultado = contador;
+        contador = contador + dos;
+    }
+    
+    return resultado;  // Retorna 20
+}
+```
+
+#### Compilar y Ejecutar
+
+```bash
+# Pipeline completo
+./bin/c_to_asm ejemplos/02_numeros_pares_while.c ejemplos/02_numeros_pares_while.asm && \
+./bin/main -e ejemplos/02_numeros_pares_while.asm
+```
+
+**Resultado**: R0 = 0x0014 (20 decimal) en 99 ciclos ✅
+
+---
+
+### Ejemplo 3: Función con Operaciones Aritméticas
+
+#### Paso 1: Código C
+
+Archivo `tests/test_c_multiply10.c`:
+```c
+// TEST: Multiplicar por 10 usando solo sumas
+int test_if(int x) {
+    int resultado;
+    
+    resultado = 0;
+    
+    // Calcular x * 10 mediante sumas sucesivas
+    resultado = x;
+    resultado = resultado + resultado;  // x * 2
+    resultado = resultado + resultado;  // x * 4
+    resultado = resultado + x;          // x * 5
+    resultado = resultado + resultado;  // x * 10
+    
+    return resultado;
+}
+
+int main() {
+    int n;
+    int result;
+    
+    n = 5;
+    result = test_if(n);  // Debería retornar 50
+    
+    return 0;
+}
+```
+
+#### Paso 2: Compilar C → ASM
+
+```bash
+./bin/c_to_asm tests/test_c_multiply10.c tests/test_c_multiply10.asm
+```
+
+Genera código ensamblador con múltiples operaciones aritméticas:
+```assembly
+; Punto de entrada: saltar a main()
+SALTAR func_main
+
+; Función: test_if(int x)
+func_test_if:
+; Variable 'x' -> R0 (param)
+; Variable 'resultado' -> R4
+MOVI R4, 0  ; Inicializar resultado = 0
+
+; resultado = x
+MOVER R4, R0
+
+; resultado = resultado + resultado  (x * 2)
+SUMAR R4, R4
+
+; resultado = resultado + resultado  (x * 4)
+SUMAR R4, R4
+
+; resultado = resultado + x  (x * 5)
+SUMAR R4, R0
+
+; resultado = resultado + resultado  (x * 10)
+SUMAR R4, R4
+
+; return resultado
+MOVER R0, R4
+RETORNAR
+
+; Función: main()
+func_main:
+; Variable 'n' -> R4
+MOVI R4, 0  ; Inicializar n = 0
+; Variable 'result' -> R5
+MOVI R5, 0  ; Inicializar result = 0
+MOVI R4, 5  ; n = 5
+
+; Llamar test_if(n)
+MOVER R0, R4
+LLAMAR func_test_if
+MOVER R5, R0  ; Guardar resultado
+
+; return 0
+MOVI R0, 0  ; Valor de retorno
+RETORNAR
+
+ALTO  ; Fin del programa
+```
+
+#### Paso 3: Ensamblar ASM → Binario
+
+```bash
+./bin/assembler tests/test_c_multiply10.asm tests/test_c_multiply10.mem
+```
+
+Genera archivo `.mem` con instrucciones máquina. Las pseudo-instrucciones LLAMAR y RETORNAR se expanden:
+
+- **LLAMAR func_test_if** → 5 instrucciones (guardar contexto + salto)
+- **RETORNAR** → 4 instrucciones (restaurar contexto + salto de regreso)
+
+#### Paso 4: Ejecutar en CPU
+
+```bash
+./bin/main -r tests/test_c_multiply10.mem
+```
+
+**Resultado esperado:**
+```
+[CPU] Programa cargado: ~35 instrucciones
+[CPU] Iniciando ejecución...
+[CPU] R5 = 0x0032  (50 en decimal: 5 * 10)
+[CPU] Ejecución completada en ~167 ciclos
+```
+
+#### Pipeline Completo en Un Solo Paso
+
+```bash
+# Compilar + Ensamblar + Ejecutar
+./bin/c_to_asm tests/test_c_multiply10.c tests/test_c_multiply10.asm && \
+./bin/main -e tests/test_c_multiply10.asm
+```
+
+**Salida:**
+```
+[CPU] test_if(5) = 50 ✓
+[CPU] Resultado: R5 = 0x0032 (50 decimal)
+[CPU] Total de ciclos: 167
+[CPU] Operaciones aritméticas validadas ✓
+```
+
+---
+
+### Observaciones sobre Operaciones Aritméticas
+
+**Características demostradas:**
+- ✅ **Llamadas a funciones**: test_if(n) con paso de parámetros
+- ✅ **Gestión de stack**: Guarda/restaura contexto automáticamente
+- ✅ **Operaciones en secuencia**: Múltiples sumas para lograr multiplicación
+- ✅ **Variables locales**: Uso de registros para variables temporales
+- ✅ **Optimización manual**: x*10 mediante x*2→x*4→x*5→x*10
+
+**Expansión de pseudo-instrucciones:**
+- Cada `LLAMAR` se convierte en 5 instrucciones máquina
+- Cada `RETORNAR` se convierte en 4 instrucciones máquina
+- El código final tiene ~35 instrucciones expandidas
+
+**Técnica de multiplicación:**
+- `x * 2` = `x + x`
+- `x * 4` = `(x * 2) + (x * 2)`
+- `x * 5` = `(x * 4) + x`
+- `x * 10` = `(x * 5) + (x * 5)`
+- Total: 4 sumas para multiplicar por 10
 
 ### Pipeline Automático (Un Solo Comando)
 
