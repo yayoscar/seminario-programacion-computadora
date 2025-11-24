@@ -290,6 +290,59 @@
                 <h2 class="text-3xl md:text-4xl mb-8 text-white/90">
                     Pipeline Completo: C → Ensamblador → Máquina
                 </h2>
+                
+                <!-- Video de YouTube - Thumbnail clickeable -->
+                <div class="max-w-4xl mx-auto mb-8">
+                    <a href="https://youtu.be/V6hmiwwRyUY?si=x0CnRMyjBLfuX3YS" 
+                       target="_blank"
+                       class="block relative group">
+                        <div class="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20 group-hover:border-white/40 transition-all">
+                            <img 
+                                src="https://img.youtube.com/vi/V6hmiwwRyUY/maxresdefault.jpg" 
+                                alt="Video de la Presentación"
+                                class="w-full h-auto"
+                                onerror="this.src='https://img.youtube.com/vi/V6hmiwwRyUY/hqdefault.jpg'"
+                            />
+                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                <div class="bg-red-600 rounded-full p-6 group-hover:scale-110 transition-transform shadow-2xl">
+                                    <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                <h3 class="text-white text-2xl font-bold mb-2">🎬 Ver Presentación en YouTube</h3>
+                                <p class="text-white/80 text-lg">Click para reproducir el video completo</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                
+                <!-- Enlaces de descarga -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-8">
+                    <a href="https://drive.google.com/file/d/15wZHpmfg5IrzyznUZlf6C7CnkjSgrbal/view?usp=sharing" 
+                       target="_blank"
+                       class="bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all p-6 rounded-xl border border-white/20 hover:border-white/40 group">
+                        <div class="text-4xl mb-3">📦</div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-purple-300 transition-colors">Descargar Código Fuente</h3>
+                        <p class="text-sm text-white/70">Proyecto completo (.zip)</p>
+                        <div class="mt-3 text-sm text-purple-300">
+                            <i class="fas fa-download"></i> Google Drive
+                        </div>
+                    </a>
+                    
+                    <a href="https://drive.google.com/file/d/170muYCCL7vFbHmbsVCvrdSax71rIzqcX/view?usp=sharing" 
+                       target="_blank"
+                       class="bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all p-6 rounded-xl border border-white/20 hover:border-white/40 group">
+                        <div class="text-4xl mb-3">📄</div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-blue-300 transition-colors">Paper de Investigación</h3>
+                        <p class="text-sm text-white/70">Documento técnico (.pdf)</p>
+                        <div class="mt-3 text-sm text-blue-300">
+                            <i class="fas fa-file-pdf"></i> Google Drive
+                        </div>
+                    </a>
+                </div>
+                
                 <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl mb-8 inline-block">
                     <p class="text-xl font-semibold mb-3">Seminario de Programación de Computadoras</p>
                     <p class="text-lg">Doctorado en Sistemas Computacionales</p>
@@ -355,7 +408,7 @@
                         <h3 class="text-2xl font-bold mt-4 mb-3">Integración y Validación</h3>
                         <ul class="space-y-2 text-slate-300">
                             <li><i class="fas fa-check text-green-500"></i> Pipeline completo integrado</li>
-                            <li><i class="fas fa-check text-green-500"></i> Recursión funcional</li>
+                            <li><i class="fas fa-exclamation-triangle text-yellow-500"></i> Recursión en desarrollo</li>
                             <li><i class="fas fa-check text-green-500"></i> Suite de pruebas</li>
                             <li><i class="fas fa-check text-green-500"></i> Documentación completa</li>
                         </ul>
@@ -1055,14 +1108,15 @@ if (rd != 0) {
         <div class="container">
             <div class="fade-in">
                 <h2 class="text-5xl font-bold mb-8 text-center">
-                    <i class="fas fa-infinity text-purple-500"></i> Recursión en Acción
+                    <i class="fas fa-infinity text-yellow-500"></i> Recursión: Trabajo en Progreso
                 </h2>
                 
                 <div class="highlight-box warning-box mb-8">
-                    <h3 class="text-2xl font-bold mb-4">Validación de Recursión</h3>
+                    <h3 class="text-2xl font-bold mb-4"><i class="fas fa-exclamation-triangle text-yellow-400"></i> Estado de la Recursión</h3>
                     <p class="text-lg">
-                        El simulador soporta <strong>recursión completa</strong> mediante gestión automática del stack.
-                        Las pseudo-instrucciones LLAMAR/RETORNAR manejan el guardado/restauración del contexto.
+                        La recursión está <strong>parcialmente implementada</strong>. Las llamadas simples a función funcionan correctamente,
+                        pero las llamadas recursivas presentan problemas con el balance del stack pointer y la preservación de registros.
+                        Las pseudo-instrucciones LLAMAR/RETORNAR están implementadas, pero requieren ajustes adicionales para soportar recursión completa.
                     </p>
                 </div>
                 
@@ -1082,9 +1136,9 @@ entero main() {
     entero resultado = fibonacci(6);
     retornar resultado;
 }</code></pre>
-                        <div class="mt-4 p-4 bg-green-900/30 rounded">
-                            <p class="text-sm"><strong>Resultado:</strong> 8</p>
-                            <p class="text-sm text-slate-400">Ejecutado en 137 ciclos</p>
+                        <div class="mt-4 p-4 bg-yellow-900/30 rounded">
+                            <p class="text-sm"><strong>Estado:</strong> ⚠️ En desarrollo</p>
+                            <p class="text-sm text-slate-400">Actualmente presenta timeout después de 10,000 ciclos</p>
                         </div>
                     </div>
                     
@@ -1255,8 +1309,8 @@ cd tests && bash run_tests.sh</code></pre>
                                 <li>✅ ISA de 16 bits en español</li>
                                 <li>✅ Compilador C funcional</li>
                                 <li>✅ Pipeline integrado C→ASM→BIN→CPU</li>
-                                <li>✅ Recursión validada</li>
-                                <li>✅ 18 tests pasando al 100%</li>
+                                <li>✅ Llamadas a función operativas</li>
+                                <li>✅ 18 tests pasando (excepto recursión)</li>
                             </ul>
                         </div>
                         <div>
@@ -1267,6 +1321,7 @@ cd tests && bash run_tests.sh</code></pre>
                                 <li>🌟 Enfoque pedagógico inclusivo</li>
                                 <li>🌟 Documentación multiplataforma</li>
                                 <li>🌟 Suite de pruebas exhaustiva</li>
+                                <li>⚠️ Recursión: trabajo en progreso</li>
                             </ul>
                         </div>
                     </div>
@@ -1284,16 +1339,17 @@ cd tests && bash run_tests.sh</code></pre>
                     <div class="card">
                         <h4 class="text-xl font-bold mb-3">Desafíos</h4>
                         <p class="text-slate-300 text-sm">
-                            Integración del pipeline completo, gestión de memoria para recursión,
-                            y soporte bilingüe en el compilador.
+                            Integración del pipeline completo lograda. Soporte bilingüe funcional.
+                            <strong>Desafío pendiente:</strong> Recursión requiere preservación correcta de registros
+                            y gestión más sofisticada del stack frame.
                         </p>
                     </div>
                     
                     <div class="card">
                         <h4 class="text-xl font-bold mb-3">Trabajo Futuro</h4>
                         <p class="text-slate-300 text-sm">
-                            Expandir el ISA con más instrucciones, soportar arrays,
-                            y añadir un debugger interactivo.
+                            <strong>Completar recursión:</strong> Corregir preservación de registros y stack pointer para llamadas recursivas.
+                            Expandir el ISA con más instrucciones, soportar arrays, y añadir un debugger interactivo.
                         </p>
                     </div>
                 </div>
